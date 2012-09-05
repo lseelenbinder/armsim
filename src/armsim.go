@@ -4,6 +4,7 @@ import (
   "flag"
   "fmt"
   "log"
+  "armsim/ram"
 )
 
 type Options struct {
@@ -21,7 +22,8 @@ func main() {
   // Handle command line flags
   options := processFlags()
 
-  print(options)
+  // Initialize RAM
+  ram.Init(uint32(options.memorySize))
 }
 
 func processFlags() *Options {

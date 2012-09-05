@@ -13,7 +13,7 @@
     - [http://golang.org/pkg/log/]()
     - [http://golang.org/pkg/flag/]()
 
-## Loader (Total time: 0.5 hours)
+## Loader (Total time: 1.5 hours)
 1. Setup package structure (Time: 0.5 hours)
   - Go has a very smart package system. Unfortunately, due to the relative
     newness of the language, implementing under the Go "standard" was difficult
@@ -23,3 +23,13 @@
   - References:
     - [http://golang.org/doc/code.html]()
     - [http://golang.org/doc/effective_go.html]()
+2. Implement RAM (Time: 1.0 hours)
+  - The implementation of RAM was fairly straight-forward. The concept is
+    simple and concise. However, the testing was a bit of a challenge because
+    Go is very type safe and intrinsically prevents many standard type-related
+    bugs.
+  - Note: Again, a lot of my time was spent learning Go best practices and testing
+    procedures. After this, I hope that the learning curve for Go will be
+    surmounted.
+  - References:
+    - [http://golang.org/pkg/testing]()
