@@ -8,6 +8,7 @@ type RAM struct {
 
 func Init(nBytes uint32) RAM {
   log.SetPrefix("RAM: ")
+
   log.Println("Initializing", nBytes, "bytes of RAM...")
   ram := RAM{make([]byte, nBytes)}
 
@@ -59,12 +60,14 @@ func (r *RAM) ReadWord(address uint32) (uint32, bool) {
 // Helpers
 
 func (r *RAM) catchAddressOutOfBounds(address uint32) bool {
-    recover()
-    if address > uint32(len(r.memory)) {
-      log.Printf("ERROR: Could not read or write memory address %d. Address is out of range.", address)
+    if err := recover(); err != nil {
+      if address > uint32(len(r.memory)) {
+        log.Printf("ERROR: Could not read or write memory address %d. Address is out of range.", address)
+      } else {
+        log.Fatalln("ERROR: Unknown Error")
+      }
       return false
     }
-
     return true
 }
 
