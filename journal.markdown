@@ -13,7 +13,7 @@
     - [http://golang.org/pkg/log/]()
     - [http://golang.org/pkg/flag/]()
 
-## Loader (Total time: 1.5 hours)
+## Loader (Total time: 4.5 hours)
 1. Setup package structure (Time: 0.5 hours)
   - Go has a very smart package system. Unfortunately, due to the relative
     newness of the language, implementing under the Go "standard" was difficult
