@@ -29,7 +29,7 @@ func (r *RAM) ReadByte(address uint32) (byte, bool) {
 }
 
 func (r *RAM) WriteHalfWord(address uint32, data uint16) bool {
-  if address & 1 == 1 {
+  if address&1 == 1 {
     log.Println("ERROR: Attempted to write halfword to an odd address.")
     return false
   }
@@ -44,7 +44,7 @@ func (r *RAM) ReadHalfWord(address uint32) (uint16, bool) {
 }
 
 func (r *RAM) WriteWord(address uint32, data uint32) bool {
-  if address & 1 == 1 || address % 4 != 0 {
+  if address&1 == 1 || address%4 != 0 {
     log.Println("ERROR: Attempted to write word to an address indivisible by 4.")
     return false
   }
@@ -60,22 +60,22 @@ func (r *RAM) ReadWord(address uint32) (uint32, bool) {
 // Helpers
 
 func (r *RAM) catchAddressOutOfBounds(address uint32) bool {
-    if err := recover(); err != nil {
-      if address > uint32(len(r.memory)) {
-        log.Printf("ERROR: Could not read or write memory address %d. Address is out of range.", address)
-      } else {
-        log.Fatalln("ERROR: Unknown Error")
-      }
-      return false
+  if err := recover(); err != nil {
+    if address > uint32(len(r.memory)) {
+      log.Printf("ERROR: Could not read or write memory address %d. Address is out of range.", address)
+    } else {
+      log.Fatalln("ERROR: Unknown Error")
     }
-    return true
+    return false
+  }
+  return true
 }
 
 func (r *RAM) writeMultiByte(address uint32, nBytes int, data uint32) bool {
   defer r.catchAddressOutOfBounds(address)
 
   for i := 0; i < nBytes; i++ {
-    r.memory[address + uint32(nBytes - 1 - i)] = byte(data >> uint(8 * i))
+    r.memory[address+uint32(nBytes-1-i)] = byte(data >> uint(8*i))
   }
 
   return true
@@ -86,7 +86,7 @@ func (r *RAM) readMultiByte(address uint32, nBytes int) (uint32, bool) {
 
   var data uint32 = 0
   for i := 0; i < nBytes; i++ {
-    data = data << 8 + uint32(r.memory[address + uint32(i)])
+    data = data<<8 + uint32(r.memory[address+uint32(i)])
   }
 
   return data, true

@@ -1,10 +1,10 @@
 package main
 
 import (
+  "armsim/ram"
   "flag"
   "fmt"
   "log"
-  "armsim/ram"
 )
 
 type Options struct {

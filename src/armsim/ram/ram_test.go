@@ -4,9 +4,9 @@ import "testing"
 
 func TestInit(t *testing.T) {
   // Test the RAM initializer at 32k
-  runInit(t, 32 * 1024)
+  runInit(t, 32*1024)
   // Test the RAM initializer at 32m
-  runInit(t, 32 * 1024 * 1024)
+  runInit(t, 32*1024*1024)
 }
 
 // Helper method for the RAM initializer testing code
@@ -15,7 +15,7 @@ func runInit(t *testing.T, nBytes uint32) {
   ram := Init(nBytes)
 
   // Ensure RAM is the same length as nBytes
-  if (uint32(len(ram.memory)) != nBytes) {
+  if uint32(len(ram.memory)) != nBytes {
     t.Fatal("Did not allocate RAM to specified nBytes")
   }
 
@@ -30,7 +30,7 @@ func runInit(t *testing.T, nBytes uint32) {
 func TestWriteByte(t *testing.T) {
   // Setup
   ram := Init(32)
-  var byteToWrite byte = 95;
+  var byteToWrite byte = 95
 
   // Test under normal conditions
   result := ram.WriteByte(0, byteToWrite)
