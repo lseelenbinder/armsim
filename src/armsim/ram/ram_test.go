@@ -48,17 +48,85 @@ func TestWriteByte(t *testing.T) {
 func TestReadByte(t *testing.T) {
   // Setup
   ram := Init(32)
+  var dataToWrite byte = 0xFF
 
   // Test normal reading of bytes
-  ram.WriteByte(0, 95)
+  ram.WriteByte(0, dataToWrite)
   b, result := ram.ReadByte(0)
-  if result && b != 95 {
-    t.Fatal("Byte not read properly.")
+  if !result || b != 0xFF {
+    t.Fatalf("expected %#x got %#x", dataToWrite, b)
   }
 
   // Test address out of range
-  ram.WriteByte(1, 95)
   b, result = ram.ReadByte(80)
+  if result {
+    t.Fatal("Attempted to read out of range address.")
+  }
+}
+
+func TestWriteHalfWord(t *testing.T) {
+  // Setup
+  ram := Init(32)
+
+  // Test normal writing of halfwords
+  // Lots of tests because this is faily complicated with shifts and casts.
+  var hwToWrite uint16
+
+  hwToWrite = 0xFFFF
+  result := ram.WriteHalfWord(0, hwToWrite)
+  b1, _ := ram.ReadByte(0)
+  b2, _ := ram.ReadByte(1)
+
+  if !result || b1 != 0xFF || b2 != 0xFF {
+    t.Fatal("Did not properly write half word. Expected:", hwToWrite, "Got:", b1, b2)
+  }
+
+  hwToWrite = 0xFF00
+  result = ram.WriteHalfWord(0, hwToWrite)
+  b1, _ = ram.ReadByte(0)
+  b2, _ = ram.ReadByte(1)
+
+  if !result || b1 != 0xFF || b2 != 0x00 {
+    t.Fatal("Did not properly write half word. Expected:", hwToWrite, "Got:", b1, b2)
+  }
+
+  hwToWrite = 0x0F0D
+  result = ram.WriteHalfWord(0, hwToWrite)
+  b1, _ = ram.ReadByte(0)
+  b2, _ = ram.ReadByte(1)
+
+  if !result || b1 != 0x0F || b2 != 0x0D {
+    t.Fatal("Did not properly write half word. Expected:", hwToWrite, "Got:", b1, b2)
+  }
+
+  // Test writing to odd address
+  result = ram.WriteHalfWord(1, hwToWrite)
+
+  if result {
+    t.Fatal("Wrote halfword to odd address. This should not happen.")
+  }
+
+  // Test writing to out-of-bounds address
+  result = ram.WriteHalfWord(34, hwToWrite)
+  if result {
+    t.Fatal("Wrote halfword to an out-of-bounds address.")
+  }
+}
+
+func TestReadHalfWord(t *testing.T) {
+  // Setup
+  ram := Init(32)
+  var hwToWrite uint16 = 0xFFFF
+
+  // Test normal reading of bytes
+  ram.WriteHalfWord(0, hwToWrite)
+  b, result := ram.ReadHalfWord(0)
+  if !result || b != hwToWrite {
+    t.Fatalf("expected %#x got %#x", hwToWrite, b)
+  }
+
+  // Test address out of range
+  _, result = ram.ReadHalfWord(80)
   if result {
     t.Fatal("Attempted to read out of range address.")
   }

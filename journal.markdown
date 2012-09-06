@@ -23,12 +23,15 @@
   - References:
     - [http://golang.org/doc/code.html]()
     - [http://golang.org/doc/effective_go.html]()
-2. Implement RAM (Time: 1.0 hours)
-  - The implementation of RAM was fairly straight-forward. The concept is
-    simple and concise. However, the testing was a bit of a challenge because
-    Go is very type safe and intrinsically prevents many standard type-related
-    bugs.
-  - Note: Again, a lot of my time was spent learning Go best practices and testing
+2. Implement RAM (Time: 2.0 hours)
+  - The implementation of RAM was fairly straight-forward until I got to the
+    HalfWords and Words. Testing also posed a bit of a challenge because Go is
+    very type safe and intrinsically prevents many standard type-related bugs;
+    hence, my test cases can be much shorter and consise.
+  - Implementing HalfWords and Words proved difficult. Because the base unit is
+    the byte, I needed to split up the words so I could store them
+    contiguously as bytes. This required shifts, casting, and additions.
+  - Note: Again, some of my time was spent learning Go best practices and testing
     procedures. After this, I hope that the learning curve for Go will be
     surmounted.
   - References:
