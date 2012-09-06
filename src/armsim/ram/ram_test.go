@@ -131,3 +131,83 @@ func TestReadHalfWord(t *testing.T) {
     t.Fatal("Attempted to read out of range address.")
   }
 }
+
+func TestWriteWord(t *testing.T) {
+  // Setup
+  ram := Init(32)
+
+  // Test normal writing of words
+  // Lots of tests because this is faily complicated with shifts and casts.
+
+  var wordToWrite uint32
+
+  wordToWrite = 0xFFFFFFFF
+  result := ram.WriteWord(0, wordToWrite)
+  hw1, _ := ram.ReadHalfWord(0)
+  hw2, _ := ram.ReadHalfWord(2)
+
+  if !result || hw1 != 0xFFFF || hw2 != 0xFFFF {
+    t.Fatalf("expected: %#x to be written instead got %#x & %#x", wordToWrite, hw1, hw2)
+  }
+
+  wordToWrite = 0xF0F0F0F0
+  result = ram.WriteWord(0, wordToWrite)
+  hw1, _ = ram.ReadHalfWord(0)
+  hw2, _ = ram.ReadHalfWord(2)
+
+  if !result || hw1 != 0xF0F0 || hw2 != 0xF0F0 {
+    t.Fatalf("expected: %#x to be written instead got %#x & %#x", wordToWrite, hw1, hw2)
+  }
+
+  wordToWrite = 0xF0F0F0F0
+  result = ram.WriteWord(4, wordToWrite)
+  hw1, _ = ram.ReadHalfWord(4)
+  hw2, _ = ram.ReadHalfWord(6)
+
+  if !result || hw1 != 0xF0F0 || hw2 != 0xF0F0 {
+    t.Fatalf("expected: %#x to be written instead got %#x & %#x", wordToWrite, hw1, hw2)
+  }
+
+  // Test writing to odd address
+  result = ram.WriteWord(1, wordToWrite)
+  if result {
+    t.Fatal("Wrote word to an address indivisible by 4. This should not happen.")
+  }
+
+  result = ram.WriteWord(3, wordToWrite)
+  if result {
+    t.Fatal("Wrote word to an address indivisible by 4. This should not happen.")
+  }
+
+  // Test writing to out-of-bounds address
+  result = ram.WriteWord(34, wordToWrite)
+  if result {
+    t.Fatal("Wrote word to an out-of-bounds address.")
+  }
+}
+
+func TestReadWord(t *testing.T) {
+  // Setup
+  ram := Init(32)
+  var wordToWrite uint32 = 0xFFFFFFFF
+
+  // Test normal reading of bytes
+  ram.WriteWord(0, wordToWrite)
+  b, result := ram.ReadWord(0)
+  if !result || b != wordToWrite {
+    t.Fatalf("expected %#x got %#x", wordToWrite, b)
+  }
+
+  wordToWrite = 0xFDF67859
+  ram.WriteWord(0, wordToWrite)
+  b, result = ram.ReadWord(0)
+  if !result || b != wordToWrite {
+    t.Fatalf("expected %#x got %#x", wordToWrite, b)
+  }
+
+  // Test address out of range
+  _, result = ram.ReadWord(80)
+  if result {
+    t.Fatal("Attempted to read out of range address.")
+  }
+}
