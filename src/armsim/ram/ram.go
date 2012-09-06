@@ -44,7 +44,7 @@ func (r *RAM) ReadHalfWord(address uint32) (uint16, bool) {
 }
 
 func (r *RAM) WriteWord(address uint32, data uint32) bool {
-  if address & 1 == 1 || address & 3 == 1 {
+  if address & 1 == 1 || address % 4 != 0 {
     log.Println("ERROR: Attempted to write word to an address indivisible by 4.")
     return false
   }

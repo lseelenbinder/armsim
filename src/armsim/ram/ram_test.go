@@ -179,6 +179,11 @@ func TestWriteWord(t *testing.T) {
     t.Fatal("Wrote word to an address indivisible by 4. This should not happen.")
   }
 
+  result = ram.WriteWord(6, wordToWrite)
+  if result {
+    t.Fatal("Wrote word to an address indivisible by 4. This should not happen.")
+  }
+
   // Test writing to out-of-bounds address
   result = ram.WriteWord(34, wordToWrite)
   if result {
