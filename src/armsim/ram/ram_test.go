@@ -216,3 +216,40 @@ func TestReadWord(t *testing.T) {
     t.Fatal("Attempted to read out of range address.")
   }
 }
+
+func TestChecksum(t *testing.T) {
+  // Test empty ram
+  ram := Init(0)
+  if ram.Checksum() != 0 {
+    t.Fatal("zero byte ram checksum is not 0")
+  }
+
+  // Note: I used WolframAlpha to calculate these small checksums. They seem to
+  // be correct.
+  ram = Init(5)
+  if ram.Checksum() != 10 {
+    t.Fatal("checksum for 5 bytes of empty ram should be 10")
+  }
+
+  ram = Init(5)
+  ram.WriteByte(0, 0x1)
+  check := ram.Checksum()
+  if check != 11 {
+    t.Fatalf("expected checksum of %d; got: %d", 0x1^0, check)
+  }
+
+  ram = Init(5)
+  ram.WriteByte(4, 11)
+  check = ram.Checksum()
+  if check != 21 {
+    t.Fatalf("expected checksum of %d; got: %d", 21, check)
+  }
+
+  ram = Init(5)
+  ram.WriteByte(3, 0x65)
+  check = ram.Checksum()
+  if check != 109 {
+    t.Fatalf("expected checksum of %d; got: %d", 109, check)
+  }
+
+}

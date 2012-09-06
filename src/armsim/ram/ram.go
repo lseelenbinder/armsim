@@ -57,6 +57,16 @@ func (r *RAM) ReadWord(address uint32) (uint32, bool) {
   return r.readMultiByte(address, 4)
 }
 
+func (r *RAM) Checksum() int32 {
+  var checksum int32
+
+  for i := 0; i < len(r.memory); i++ {
+    checksum += int32(r.memory[i]) ^ int32(i)
+  }
+
+  return checksum
+}
+
 // Helpers
 
 func (r *RAM) catchAddressOutOfBounds(address uint32) bool {
