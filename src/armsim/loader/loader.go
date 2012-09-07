@@ -4,18 +4,19 @@ import (
   "armsim/ram"
   "debug/elf"
   "encoding/binary"
+  "errors"
   "log"
   "os"
 )
 
-func LoadELF(filePath string, memory *ram.RAM) bool {
+func LoadELF(filePath string, memory *ram.RAM) (err error) {
   log.SetPrefix("Loader: ")
   // Attempt to open file
   log.Printf("Opening file %s", filePath)
   file, err := os.Open(filePath)
   if err != nil {
     log.Printf("Error reading file (perhaps it doesn't exist)...")
-    return false
+    return
   }
 
   // Test magic bytes
@@ -25,8 +26,9 @@ func LoadELF(filePath string, memory *ram.RAM) bool {
   log.Printf("Magic bytes: %s", magic)
 
   if err != nil || magic[0] != 0x7f || magic[1] != 'E' || magic[2] != 'L' || magic[3] != 'F' {
+    err = errors.New("ELF magic bytes were incorrect.")
     log.Println("ELF magic bytes were incorrect.")
-    return false
+    return
   }
 
   // Read ELF Header
@@ -36,7 +38,7 @@ func LoadELF(filePath string, memory *ram.RAM) bool {
   err = binary.Read(file, binary.LittleEndian, elfHeader)
   if err != nil {
     log.Println("Error reading ELF header...")
-    return false
+    return
   }
 
   log.Printf("Program header offset: %d", elfHeader.Phoff)
@@ -57,7 +59,7 @@ func LoadELF(filePath string, memory *ram.RAM) bool {
     err = binary.Read(file, binary.LittleEndian, pHeader)
     if err != nil {
       log.Println("Error reading program header %d...", i)
-      return false
+      return
     }
 
     log.Printf("Reading program header %d of %d - Offset: %d, Size: %d, Address: %d", i+1, elfHeader.Phnum, pHeader.Off, pHeader.Filesz, pHeader.Vaddr)
@@ -69,10 +71,14 @@ func LoadELF(filePath string, memory *ram.RAM) bool {
     var i uint32 = 0
     for ; i < pHeader.Filesz; i++ {
       file.Read(b)
-      memory.WriteByte(pHeader.Vaddr+i, b[0])
+      if !memory.WriteByte(pHeader.Vaddr+i, b[0]) {
+        err = errors.New("Insuffcient memory.")
+        return
+      }
     }
   }
 
   file.Close()
-  return true
+  return
 }
+

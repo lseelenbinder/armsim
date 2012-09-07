@@ -3,10 +3,10 @@ package main
 import (
   "armsim/ram"
   "armsim/loader"
+  "errors"
   "flag"
   "fmt"
   "log"
-  "os"
 )
 
 type Options struct {
@@ -22,30 +22,28 @@ func main() {
   fmt.Println("ARMSim by Luke Seelenbinder.")
 
   // Handle command line flags
-  options := processFlags()
+  options, err := processFlags()
+  if err != nil {
+    fmt.Println(err)
+    flag.Usage()
+    return
+  }
 
   // Initialize RAM
   memory := ram.Init(uint32(options.memorySize))
 
   // Load ELF File
-  success := loader.LoadELF(options.fileName, &memory)
-  if success {
-    fmt.Println("Loaded valid ELF file - checksum is", memory.Checksum())
+  err = loader.LoadELF(options.fileName, &memory)
+  if err != nil {
+    fmt.Println("Unable to load file. Encountered error -", err)
   } else {
-    fmt.Println("Unable to load file. It may not be an ELF file or it may not exist.")
+    fmt.Println("Loaded valid ELF file - checksum is", memory.Checksum())
   }
 }
 
-func processFlags() *Options {
-  defer func() {
-    err := recover()
-    if err != nil {
-      Usage()
-    }
-  }()
-
+func processFlags() (options *Options, err error) {
   // Create Options
-  options := new(Options)
+  options = new(Options)
 
   // Define Options
   flag.UintVar(&options.memorySize, "mem", 32768, "RAM size in bytes")
@@ -57,20 +55,15 @@ func processFlags() *Options {
   // Validate Options
   log.Println("RAM Size:", options.memorySize)
   if options.memorySize > 1048576 {
-    fmt.Println("RAM size is too large. Must be under 1MB (1048576).")
-    log.Panicln("RAM size is too large. Quiting...")
+    err = errors.New("RAM size is too large. Must be under 1MB (1048576).")
+    return
   }
 
   log.Println("File name:", options.fileName)
   if options.fileName == "" {
-    fmt.Println("Please specify a file name.")
-    log.Panicln("Must specify a file name. Quiting...")
+    err = errors.New("Please specify a file name.")
+    return
   }
 
-  return options
-}
-
-func Usage() {
-  fmt.Println("usage: armsim [ --load elf-file ] [ --mem memory-size ]")
-  os.Exit(1)
+  return
 }
