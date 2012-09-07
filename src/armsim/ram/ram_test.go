@@ -168,6 +168,15 @@ func TestWriteWord(t *testing.T) {
     t.Fatalf("expected: %#x to be written instead got %#x & %#x", wordToWrite, hw1, hw2)
   }
 
+  wordToWrite = 0x2
+  result = ram.WriteWord(4, wordToWrite)
+  hw1, _ = ram.ReadHalfWord(4)
+  hw2, _ = ram.ReadHalfWord(6)
+
+  if !result || hw1 != 0x0000 || hw2 != 0x0002 {
+    t.Fatalf("expected: %#x to be written instead got %#x & %#x", wordToWrite, hw1, hw2)
+  }
+
   // Test writing to odd address
   result = ram.WriteWord(1, wordToWrite)
   if result {
@@ -252,4 +261,47 @@ func TestChecksum(t *testing.T) {
     t.Fatalf("expected checksum of %d; got: %d", 109, check)
   }
 
+}
+
+func TestTestFlag(t *testing.T) {
+  // Setup
+  // Initialize a single word for simplicity
+  ram := Init(4)
+
+  ram.WriteWord(0, 0x0001)
+  if ram.TestFlag(0, 0) != true {
+    t.Fatal("tested bit was false; expected true")
+  }
+
+  ram.WriteWord(0, 0x2)
+  if ram.TestFlag(0, 0) != false {
+    t.Fatal("tested bit was true; expected false")
+  }
+  if ram.TestFlag(0, 1) != true {
+    t.Fatal("tested bit was false; expected true")
+  }
+
+  ram.WriteWord(0, 0xFFFFFFFF)
+  for i := 0; i < 32; i++ {
+    if ram.TestFlag(0, uint32(i)) == false {
+      t.Fatal("tested bit was false; expected true")
+    }
+  }
+
+  ram.WriteWord(0, 0x0)
+  for i := 0; i < 32; i++ {
+    if ram.TestFlag(0, uint32(i)) == true {
+      t.Fatal("tested bit was true; expected false")
+    }
+  }
+
+  // Test out-of-bounds read
+  func() {
+    defer func() {
+      recover()
+    }()
+
+    ram.TestFlag(5, 0)
+    t.Fatal("Shouldn't have been able to read this byte.")
+  }()
 }

@@ -67,6 +67,20 @@ func (r *RAM) Checksum() int32 {
   return checksum
 }
 
+func (r *RAM) TestFlag(address uint32, bitPosition uint32) bool {
+  word, success := r.ReadWord(address)
+  if !success {
+    panic("Unable to read word")
+  }
+
+  log.Printf("word: %#x mask: %#x", word, 1<<bitPosition)
+  // Rather complicated method:
+  // I shift 1 n times to make a mask and perform an AND leaving a single one
+  // (or zero) at the bitPosition. After doing so, I have to shift back
+  // to compare with 1 to obtain a boolean.
+  return (word&(1<<bitPosition))>>bitPosition == 1
+}
+
 // Helpers
 
 func (r *RAM) catchAddressOutOfBounds(address uint32) bool {
