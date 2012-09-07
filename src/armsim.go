@@ -46,7 +46,7 @@ func processFlags() (options *Options, err error) {
   options = new(Options)
 
   // Define Options
-  flag.UintVar(&options.memorySize, "mem", 32768, "RAM size in bytes")
+  flag.UintVar(&options.memorySize, "mem", 32768, "RAM size in bytes (1MB max)")
   flag.StringVar(&options.fileName, "load", "", "ELF File Name")
 
   // Parse Options
