@@ -10,8 +10,8 @@
     spent most of my time learning Go conventions and fighting with the little
     things that vary from language to language.
   - References:
-    - [http://golang.org/pkg/log/]()
-    - [http://golang.org/pkg/flag/]()
+    - [http://golang.org/pkg/log/](http://golang.org/pkg/log/)
+    - [http://golang.org/pkg/flag/](http://golang.org/pkg/flag/)
 
 ## Loader (Total time: 11.5 hours)
 1. Setup package structure (Time: 0.5 hours)
@@ -21,9 +21,9 @@
     my project according to recommended standards. The key was temporarily
     setting `$GOPATH` to include my source directory.
   - References:
-    - [http://golang.org/doc/code.html]()
-    - [http://golang.org/doc/effective_go.html]()
-    - [http://lmgtfy.com/?q=golang+gopath]()
+    - [http://golang.org/doc/code.html](http://golang.org/doc/code.html)
+    - [http://golang.org/doc/effective_go.html](http://golang.org/doc/effective_go.html)
+    - [http://lmgtfy.com/?q=golang+gopath](http://lmgtfy.com/?q=golang+gopath)
 2. Implement RAM (Time: 7.0 hours)
   - Notes:
     - The implementation of RAM was fairly straight-forward until I got to the
@@ -42,7 +42,7 @@
       procedures. After implementing RAM, I hope that the learning curve for Go
       will be surmounted.
   - References:
-    - [http://golang.org/pkg/testing]()
+    - [http://golang.org/pkg/testing](http://golang.org/pkg/testing)
 3. Implement ELF Loader (2.0 hours)
   - Notes:
     - After implementation of well-tested RAM, the loader was rather simple.
@@ -50,10 +50,10 @@
       loader code. The biggest difficulty was fully understanding the ELF
       format and how to properly read binary into Go's provided structs.
   - References:
-    - [http://golang.org/pkg/debug/elf]()
-    - [http://golang.org/pkg/binary/encoding]()
-    - [http://golang.org/pkg/os/]()
-    - [http://golang.org/src/pkg/debug/elf/file.go]()
+    - [http://golang.org/pkg/debug/elf](http://golang.org/pkg/debug/elf)
+    - [http://golang.org/pkg/binary/encoding](http://golang.org/pkg/binary/encoding)
+    - [http://golang.org/pkg/os/](http://golang.org/pkg/os/)
+    - [http://golang.org/src/pkg/debug/elf/file.go](http://golang.org/src/pkg/debug/elf/file.go)
 4. General Refactoring (Time: 2 hours)
   - After a few days and many lines of Go code, I saw a few things that needed
     to be changed, primarily my error handling code. I spent a few hours
