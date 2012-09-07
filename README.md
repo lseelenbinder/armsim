@@ -22,7 +22,7 @@ set a proper `$GOPATH`.
 
 After obtaining Go, build the project on Linux by:
 - `cd` to the armsim/ folder in the project.
-- Add the armsim/ folder to your GOPATH: export GOPATH=$GOPATH:`pwd`
+- Add the armsim/ folder to your GOPATH: `export GOPATH=$GOPATH:`pwd``
 - Build the armsim executable with: `go build -o install/armsim src/armsim.go`
 - Change to the install directory and run `./armsim` (with `2> /dev/null` to avoid
   log entries)
