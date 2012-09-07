@@ -269,24 +269,24 @@ func TestTestFlag(t *testing.T) {
   ram := New(4)
 
   ram.WriteWord(0, 0x0001)
-  flag, err := ram.TestFlag(0,0)
+  flag, err := ram.TestFlag(0, 0)
   if err != nil || flag != true {
     t.Fatal("tested bit was false; expected true")
   }
 
   ram.WriteWord(0, 0x2)
-  flag, err = ram.TestFlag(0,0)
+  flag, err = ram.TestFlag(0, 0)
   if err != nil || flag != false {
     t.Fatal("tested bit was true; expected false")
   }
-  flag, err = ram.TestFlag(0,1)
+  flag, err = ram.TestFlag(0, 1)
   if err != nil || flag != true {
     t.Fatal("tested bit was false; expected true")
   }
 
   ram.WriteWord(0, 0xFFFFFFFF)
   for i := 0; i < 32; i++ {
-    flag, err = ram.TestFlag(0,uint32(i))
+    flag, err = ram.TestFlag(0, uint32(i))
     if err != nil || flag != true {
       t.Fatal("tested bit was false; expected true")
     }
@@ -294,7 +294,7 @@ func TestTestFlag(t *testing.T) {
 
   ram.WriteWord(0, 0x0)
   for i := 0; i < 32; i++ {
-    flag, err = ram.TestFlag(0,uint32(i))
+    flag, err = ram.TestFlag(0, uint32(i))
     if err != nil || flag != false {
       t.Fatal("tested bit was true; expected false")
     }

@@ -1,8 +1,8 @@
 package main
 
 import (
-  "armsim/ram"
   "armsim/loader"
+  "armsim/ram"
   "errors"
   "flag"
   "fmt"

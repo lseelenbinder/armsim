@@ -1,8 +1,8 @@
 package ram
 
 import (
-  "log"
   "errors"
+  "log"
 )
 
 type RAM struct {

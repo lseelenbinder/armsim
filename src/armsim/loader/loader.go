@@ -82,4 +82,3 @@ func LoadELF(filePath string, memory *ram.RAM) (err error) {
   file.Close()
   return
 }
-
