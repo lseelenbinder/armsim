@@ -13,7 +13,7 @@
     - [http://golang.org/pkg/log/]()
     - [http://golang.org/pkg/flag/]()
 
-## Loader (Total time: 9.5 hours)
+## Loader (Total time: 11.5 hours)
 1. Setup package structure (Time: 0.5 hours)
   - Go has a very smart package system. Unfortunately, due to the relative
     newness of the language, implementing under the Go "standard" was difficult
@@ -54,6 +54,10 @@
     - [http://golang.org/pkg/binary/encoding]()
     - [http://golang.org/pkg/os/]()
     - [http://golang.org/src/pkg/debug/elf/file.go]()
+4. General Refactoring (Time: 2 hours)
+  - After a few days and many lines of Go code, I saw a few things that needed
+    to be changed, primarily my error handling code. I spent a few hours
+    getting this cleaned-up and doing some general refactoring work.
 - Notes:
   - (9/7/12) At this checkpoint, I feel like the various code and test suites
     "work". However, the code itself has much maturing to do. This is a result
