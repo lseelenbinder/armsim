@@ -337,3 +337,24 @@ func TestSetFlag(t *testing.T) {
     t.Fatal("should have panicked")
   }()
 }
+
+func TestExtractBits(t *testing.T) {
+  result := ExtractBits(0xb5, 1, 3)
+  if result != 0x04 {
+    t.Fatalf("expected: 0x04 got: %#x", result)
+  }
+
+  result = ExtractBits(0xb5, 0, 3)
+  if result != 0x05 {
+    t.Fatalf("expected: 0x05 got: %#x", result)
+  }
+
+  // Implicity works
+  result = ExtractBits(0xb5, 0, 33)
+  if result != 0xb5 {
+    t.Fatalf("expected: 0x05 got: %#x", result)
+  }
+
+  // Explicitly fails due to typing
+  // ExtractBits(0xb5, -1, 33)
+}

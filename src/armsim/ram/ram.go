@@ -98,6 +98,19 @@ func (r *RAM) SetFlag(address uint32, bitPosition uint32, flag bool) {
   log.Printf("word: %#x mask: %#x", word, 1<<bitPosition)
 }
 
+func ExtractBits(word uint32, startBit uint32, endBit uint32) uint32 {
+  mask := uint32(0)
+  for i := 31; i >= 0; i-- {
+    mask <<= 1
+    if startBit <= uint32(i) && uint32(i) < endBit {
+      mask |= 1
+    }
+  }
+
+  log.Printf("word: %#x mask: %#x", word, mask)
+  return word & mask
+}
+
 // Helpers
 
 func (r *RAM) catchAddressOutOfBounds(address uint32) bool {
