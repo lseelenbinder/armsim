@@ -30,10 +30,10 @@ func main() {
   }
 
   // Initialize RAM
-  memory := ram.Init(uint32(options.memorySize))
+  memory := ram.New(uint32(options.memorySize))
 
   // Load ELF File
-  err = loader.LoadELF(options.fileName, &memory)
+  err = loader.LoadELF(options.fileName, memory)
   if err != nil {
     fmt.Println("Unable to load file. Encountered error -", err)
   } else {

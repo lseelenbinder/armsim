@@ -71,7 +71,8 @@ func LoadELF(filePath string, memory *ram.RAM) (err error) {
     var i uint32 = 0
     for ; i < pHeader.Filesz; i++ {
       file.Read(b)
-      if !memory.WriteByte(pHeader.Vaddr+i, b[0]) {
+      err = memory.WriteByte(pHeader.Vaddr+i, b[0])
+      if err != nil {
         err = errors.New("Insuffcient memory.")
         return
       }
