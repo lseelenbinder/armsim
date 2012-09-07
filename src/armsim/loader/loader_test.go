@@ -1,8 +1,8 @@
 package loader
 
 import (
-  "testing"
   "armsim/ram"
+  "testing"
 )
 
 func TestLoadELF(t *testing.T) {

@@ -2,10 +2,10 @@ package loader
 
 import (
   "armsim/ram"
-  "os"
   "debug/elf"
   "encoding/binary"
   "log"
+  "os"
 )
 
 func LoadELF(filePath string, memory *ram.RAM) bool {
@@ -31,7 +31,7 @@ func LoadELF(filePath string, memory *ram.RAM) bool {
 
   // Read ELF Header
   log.Println("Reading ELF header...")
-  file.Seek(0,0)
+  file.Seek(0, 0)
   elfHeader := new(elf.Header32)
   err = binary.Read(file, binary.LittleEndian, elfHeader)
   if err != nil {
@@ -42,7 +42,6 @@ func LoadELF(filePath string, memory *ram.RAM) bool {
   log.Printf("Program header offset: %d", elfHeader.Phoff)
   log.Printf("# of program header entires: %d", elfHeader.Phnum)
 
-
   // Seek to Program Header start
   file.Seek(int64(elfHeader.Phoff), 0)
 
@@ -51,7 +50,7 @@ func LoadELF(filePath string, memory *ram.RAM) bool {
   pHeader := new(elf.Prog32)
   for i := 0; uint16(i) < elfHeader.Phnum; i++ {
     // Seek to program header
-    offset := int64(elfHeader.Phoff) + int64(i) * int64(elfHeader.Phentsize)
+    offset := int64(elfHeader.Phoff) + int64(i)*int64(elfHeader.Phentsize)
     file.Seek(offset, 0)
 
     // Read program header
@@ -61,7 +60,7 @@ func LoadELF(filePath string, memory *ram.RAM) bool {
       return false
     }
 
-    log.Printf("Reading program header %d of %d - Offset: %d, Size: %d, Address: %d", i + 1, elfHeader.Phnum, pHeader.Off, pHeader.Filesz, pHeader.Vaddr)
+    log.Printf("Reading program header %d of %d - Offset: %d, Size: %d, Address: %d", i+1, elfHeader.Phnum, pHeader.Off, pHeader.Filesz, pHeader.Vaddr)
     // Seek to offset
     file.Seek(int64(pHeader.Off), 0)
 
@@ -70,7 +69,7 @@ func LoadELF(filePath string, memory *ram.RAM) bool {
     var i uint32 = 0
     for ; i < pHeader.Filesz; i++ {
       file.Read(b)
-      memory.WriteByte(pHeader.Vaddr + i, b[0])
+      memory.WriteByte(pHeader.Vaddr+i, b[0])
     }
   }
 
