@@ -305,3 +305,35 @@ func TestTestFlag(t *testing.T) {
     t.Fatal("Shouldn't have been able to read this byte.")
   }()
 }
+
+func TestSetFlag(t *testing.T) {
+  // Setup
+  ram := Init(4)
+
+  ram.WriteWord(0, 0xFFFFFFFF)
+  ram.SetFlag(0, 0, true)
+  if ram.TestFlag(0, 0) != true {
+    t.Fatal("tested bit was not set to true")
+  }
+
+  ram.SetFlag(0, 0, false)
+  if ram.TestFlag(0, 0) != false {
+    t.Fatal("tested bit was not set to false")
+  }
+
+  ram.WriteWord(0, 0xFFFFFFFF)
+  ram.SetFlag(0, 5, false)
+  if ram.TestFlag(0, 5) != false {
+    t.Fatal("tested bit was not set to false")
+  }
+
+  // Out-of-bounds testing
+  func() {
+    defer func() {
+      recover()
+    }()
+
+    ram.SetFlag(5, 5, false)
+    t.Fatal("should have panicked")
+  }()
+}

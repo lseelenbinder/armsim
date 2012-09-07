@@ -81,6 +81,23 @@ func (r *RAM) TestFlag(address uint32, bitPosition uint32) bool {
   return (word&(1<<bitPosition))>>bitPosition == 1
 }
 
+func (r *RAM) SetFlag(address uint32, bitPosition uint32, flag bool) {
+  word, success := r.ReadWord(address)
+  if !success {
+    panic("Unable to read address")
+  }
+
+  if flag {
+    mask := uint32(1) << bitPosition
+    r.WriteWord(address, word|mask)
+  } else {
+    mask := uint32(0xFFFFFFFF)
+    mask ^= 1 << bitPosition
+    r.WriteWord(address, word&mask)
+  }
+  log.Printf("word: %#x mask: %#x", word, 1<<bitPosition)
+}
+
 // Helpers
 
 func (r *RAM) catchAddressOutOfBounds(address uint32) bool {
