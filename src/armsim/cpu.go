@@ -10,7 +10,11 @@ import (
 
 // Registers
 const (
-	// iota is an enumerator that returns 0, 1, 2, ... on successive calls.
+	// Note: In a normal ARM architecture, there would be 32 registers. Two
+	// 15-place banks, a CPSR, and a SPSR. In this implementation, the dual
+	// "normal" register banks are not implemented, nor is the SPSR implemented.
+
+	// iota is an enumerator that returns 0, 1, 2, ..., on successive calls.
 	// Each consecutive constant is assumed to be equal to the previous constant;
 	// however, because of iota this means they are created correctly.
 	r0 uint32 = 4 * iota
@@ -29,12 +33,31 @@ const (
 	r13
 	r14
 	r15
+	r16
 	// Stack Pointer
 	SP = r13
 	// Link Register
 	LR = r14
 	// Program Counter
 	PC = r15
+	// Current Program Status (N, Z, C, V or F flags)
+	CPSR = r16
+)
+
+// Flags
+const (
+	// Ignore first result
+	_ = iota
+	// Negative Flag
+	N uint32 = 32 - iota
+	// Zero Flag
+	Z
+	// Carry Flag
+	C
+	// Overflow Flag
+	V
+	// Overflow Flag (alternative spelling)
+	F = V
 )
 
 // A CPU holds references for RAM and registers a CPU needs to function.
