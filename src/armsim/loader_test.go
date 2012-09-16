@@ -1,3 +1,7 @@
+/*
+* Filename: loader_test.go
+* Contents: Tests for the loader code
+ */
 package armsim
 
 import "testing"

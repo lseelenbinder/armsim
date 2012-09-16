@@ -8,6 +8,14 @@ import (
 	"os"
 )
 
+/*
+* Loads an ELF structed executable file into memory.
+* Parameters:
+*		filePath - a path to the ELF file to open
+*		memory - a pointer to a suitable Memory
+* Returns:
+*		err - any error that might have occured
+ */
 func LoadELF(filePath string, memory *Memory) (err error) {
 	log.SetPrefix("Loader: ")
 	// Attempt to open file
