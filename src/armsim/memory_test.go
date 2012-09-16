@@ -1,7 +1,6 @@
-/*
-* Filename: memory_test.go
-* Contents: Tests for Memory struct and methods
- */
+// Filename: memory_test.go
+// Contents: Tests for Memory struct and methods
+
 package armsim
 
 import "testing"

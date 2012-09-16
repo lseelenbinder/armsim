@@ -1,7 +1,6 @@
-/*
-* Filename: memory.go
-* Contents: Definition for Memory struct and related methods
- */
+// Filename: memory.go
+// Contents: Definition for Memory struct and related methods
+
 package armsim
 
 import (
@@ -9,20 +8,18 @@ import (
 	"log"
 )
 
-/*
-* A shell containing a memory slice (a variable-length slice of bytes). Used to
-* implement RAM or other like memory units.
- */
+// A Memory holds a memory slice (a variable-length slice of bytes) used to
+// implement RAM or other like memory structures.
 type Memory struct {
 	memory []byte
 }
 
-/*
-* Creates and initializes a Memory struct.
-* Parameters:
-*		nBytes - size of the new memory unit in bytes
-* Returns: A pointer to the newly created Memory
- */
+// Initializes a Memory
+//
+// Parameters:
+//  nBytes - size of the new memory unit in bytes
+//
+// Returns: A pointer to the newly created Memory
 func NewMemory(nBytes uint32) (m *Memory) {
 	log.SetPrefix("Memory: ")
 
@@ -34,14 +31,14 @@ func NewMemory(nBytes uint32) (m *Memory) {
 	return
 }
 
-/*
-* Writes a byte of data to memory at a specified address.
-* Parameters:
-*		address - 32-bit address of write location in memory
-*		data - byte of data to write
-*	Returns:
-*		err - any error that may have occurred
- */
+// Writes a byte of data to memory at a specified address.
+//
+// Parameters:
+//  address - 32-bit address of write location in memory
+//  data - byte of data to write
+//
+// Returns:
+//  err - any error that may have occurred
 func (m *Memory) WriteByte(address uint32, data byte) (err error) {
 	err = m.catchAddressOutOfBounds(address)
 	if err != nil {
@@ -52,14 +49,14 @@ func (m *Memory) WriteByte(address uint32, data byte) (err error) {
 	return
 }
 
-/*
-* Reads a byte of data from memory at a specified address.
-* Parameters:
-*		address - 32-bit address of read location in memory
-* Returns:
-*		data - byte of data at address
-*		err - any error that may have occurred
- */
+// Reads a byte of data from memory at a specified address.
+//
+// Parameters:
+//  address - 32-bit address of read location in memory
+//
+// Returns:
+//  data - byte of data at address
+//  err - any error that may have occurred
 func (m *Memory) ReadByte(address uint32) (data byte, err error) {
 	err = m.catchAddressOutOfBounds(address)
 	if err != nil {
@@ -70,14 +67,14 @@ func (m *Memory) ReadByte(address uint32) (data byte, err error) {
 	return
 }
 
-/*
-* Writes a halfword (16 bits) of data to memory at a specified address.
-* Parameters:
-*		address - 32-bit address of write location in memory, must be divisible by 2
-*		data - halfword of data to write
-*	Returns:
-*		err - any error that may have occurred
- */
+// Writes a halfword (16 bits) of data to memory at a specified address.
+//
+// Parameters:
+//  address - 32-bit address of write location in memory, must be divisible by 2
+//  data - halfword of data to write
+//
+// Returns:
+//  err - any error that may have occurred
 func (m *Memory) WriteHalfWord(address uint32, data uint16) (err error) {
 	if address&1 == 1 {
 		log.Println("ERROR: Attempted to write halfword to an odd address.")
@@ -89,14 +86,14 @@ func (m *Memory) WriteHalfWord(address uint32, data uint16) (err error) {
 	return m.writeMultiByte(address, 2, uint32(data))
 }
 
-/*
-* Reads a halfword (16 bits) of data from memory at a specified address.
-* Parameters:
-*		address - 32-bit address of read location in memory
-* Returns:
-*		data - halfword of data at address
-*		err - any error that may have occurred
- */
+// Reads a halfword (16 bits) of data from memory at a specified address.
+//
+// Parameters:
+//  address - 32-bit address of read location in memory
+//
+// Returns:
+//  data - halfword of data at address
+//  err - any error that may have occurred
 func (m *Memory) ReadHalfWord(address uint32) (data uint16, err error) {
 	var data32 uint32
 	data32, err = m.readMultiByte(address, 2)
@@ -105,14 +102,14 @@ func (m *Memory) ReadHalfWord(address uint32) (data uint16, err error) {
 	return
 }
 
-/*
-* Writes a word (32 bits) of data to memory at a specified address.
-* Parameters:
-*		address - 32-bit address of write location in memory, must be divisible by 4
-*		data - word of data to write
-*	Returns:
-*		err - any error that may have occurred
- */
+// Writes a word (32 bits) of data to memory at a specified address.
+//
+// Parameters:
+//  address - 32-bit address of write location in memory, must be divisible by 4
+//  data - word of data to write
+//
+// Returns:
+//  err - any error that may have occurred
 func (m *Memory) WriteWord(address uint32, data uint32) (err error) {
 	if address&1 == 1 || address%4 != 0 {
 		log.Println("ERROR: Attempted to write word to an address indivisible by 4.")
@@ -124,24 +121,23 @@ func (m *Memory) WriteWord(address uint32, data uint32) (err error) {
 	return m.writeMultiByte(address, 4, data)
 }
 
-/*
-* Reads a word (32 bits) of data from memory at a specified address.
-* Parameters:
-*		address - 32-bit address of read location in memory
-* Returns:
-*		data - word of data at address
-*		err - any error that may have occurred
- */
+// Reads a word (32 bits) of data from memory at a specified address.
+//
+// Parameters:
+//  address - 32-bit address of read location in memory
+//
+// Returns:
+//  data - word of data at address
+//  err - any error that may have occurred
 func (m *Memory) ReadWord(address uint32) (data uint32, err error) {
 	data, err = m.readMultiByte(address, 4)
 	return
 }
 
-/*
-* Calculates a simple checksum based on the whole memory.
-* Returns:
-*		checksum - 32-bit integer
- */
+// Calculates a simple checksum based on the whole memory.
+//
+// Returns:
+//  checksum - 32-bit integer
 func (m *Memory) Checksum() (checksum int32) {
 	for i := 0; i < len(m.memory); i++ {
 		checksum += int32(m.memory[i]) ^ int32(i)
@@ -150,15 +146,15 @@ func (m *Memory) Checksum() (checksum int32) {
 	return
 }
 
-/*
-* Checks a specified bit in a word of data.
-* Parameters:
-*		address - 32-bit address of read location in memory
-*		bitPosition - location in the word to test (based on endianness
-*	Returns:
-*		flag - the on/off state of the tested bit
-*		err - any error that may have occurred
- */
+// Checks a specified bit in a word of data.
+//
+// Parameters:
+//  address - 32-bit address of read location in memory
+//  bitPosition - location in the word to test (based on endianness
+//
+// Returns:
+//  flag - the on/off state of the tested bit
+//  err - any error that may have occurred
 func (m *Memory) TestFlag(address uint32, bitPosition uint32) (flag bool, err error) {
 	word, err := m.ReadWord(address)
 	if err != nil {
@@ -173,15 +169,15 @@ func (m *Memory) TestFlag(address uint32, bitPosition uint32) (flag bool, err er
 	return
 }
 
-/*
-* Sets a specified bit in a word to a 1 or 0.
-* Parameters:
-*		address - 32-bit address of read location in memory
-*		bitPosition - location in the word to test (based on endianness
-*		flag - a boolean, determines whether to set a bit to 1 or 0
-* Returns:
-*		err - any error that may have occurred
- */
+// Sets a specified bit in a word to a 1 or 0.
+//
+// Parameters:
+//  address - 32-bit address of read location in memory
+//  bitPosition - location in the word to test (based on endianness
+//  flag - a boolean, determines whether to set a bit to 1 or 0
+//
+// Returns:
+//  err - any error that may have occurred
 func (m *Memory) SetFlag(address uint32, bitPosition uint32, flag bool) (err error) {
 	word, err := m.ReadWord(address)
 	if err != nil {
@@ -209,14 +205,14 @@ func (m *Memory) SetFlag(address uint32, bitPosition uint32, flag bool) (err err
 	return
 }
 
-/*
-* Extracts bits from a word.
-* Parameters:
-*		word - a word of data
-*		startBit - the least-significant bit to extract from
-*		endBit - the most-significant bit to extract up to
-* Returns: a new word containing the extracted bits and the rest set to zero
- */
+// Extracts bits from a word.
+//
+// Parameters:
+//  word - a word of data
+//  startBit - the least-significant bit to extract from
+//  endBit - the most-significant bit to extract up to
+//
+// Returns: a new word containing the extracted bits and the rest set to zero
 func ExtractBits(word uint32, startBit uint32, endBit uint32) uint32 {
 	mask := uint32(0)
 	for i := 31; i >= 0; i-- {
@@ -232,9 +228,7 @@ func ExtractBits(word uint32, startBit uint32, endBit uint32) uint32 {
 
 // Helpers
 
-/*
-* Tests if an address is in the range of the memory. Returns nil or an error.
- */
+// Checks if an address is in the range of the memory. Returns nil or an error.
 func (m *Memory) catchAddressOutOfBounds(address uint32) (err error) {
 	if address > uint32(len(m.memory)) {
 		log.Printf("ERROR: Could not read or write memory address %d. Address is out of range.", address)
@@ -244,9 +238,7 @@ func (m *Memory) catchAddressOutOfBounds(address uint32) (err error) {
 	return
 }
 
-/*
-* Writes multiple bytes at a time in correct endianness
- */
+// Writes multiple bytes at a time in correct endianness
 func (m *Memory) writeMultiByte(address uint32, nBytes int, data uint32) (err error) {
 	err = m.catchAddressOutOfBounds(address)
 	if err != nil {
@@ -260,9 +252,7 @@ func (m *Memory) writeMultiByte(address uint32, nBytes int, data uint32) (err er
 	return
 }
 
-/*
-* Reads multiple bytes at a time in correct endianness
- */
+// Reads multiple bytes at a time in correct endianness
 func (m *Memory) readMultiByte(address uint32, nBytes int) (data uint32, err error) {
 	err = m.catchAddressOutOfBounds(address)
 	if err != nil {

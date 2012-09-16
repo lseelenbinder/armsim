@@ -1,7 +1,6 @@
-/*
-* Filename: cpu_test.go
-* Contents: Tests for CPU struct.
- */
+// Filename: cpu_test.go
+// Contents: Tests for CPU struct.
+
 package armsim
 
 import (

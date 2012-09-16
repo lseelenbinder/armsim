@@ -1,7 +1,6 @@
-/*
-* Filename: cpu.go
-* Contents: The CPU struct and related methods
- */
+// Filename: cpu.go
+// Contents: The CPU struct and related methods
+
 package armsim
 
 import (
@@ -9,9 +8,9 @@ import (
 	"time"
 )
 
-// Initialize register position constants
+// Registers
 const (
-	// iota is an enumerator that returns 0, 1, 2, ...
+	// iota is an enumerator that returns 0, 1, 2, ... on successive calls.
 	// Each consecutive constant is assumed to be equal to the previous constant;
 	// however, because of iota this means they are created correctly.
 	r0 uint32 = 4 * iota
@@ -38,9 +37,7 @@ const (
 	PC = r15
 )
 
-/*
-* CPU holds references to the memory units a CPU needs to function.
- */
+// A CPU holds references for RAM and registers a CPU needs to function.
 type CPU struct {
 	// A reference to the assigned memory bank
 	ram *Memory
@@ -49,13 +46,14 @@ type CPU struct {
 	registers *Memory
 }
 
-/*
-* Initializes a CPU struct
-* Parameters:
-*		ram - a pointer to an initialized Memory struct
-*		registers - a pointer to an initialized Memory struct with size of 64 bytes
-* Returns: a pointer to the newly created CPU
- */
+// Initializes a CPU
+//
+// Parameters:
+//  ram - a pointer to an initialized Memory struct
+//  registers - a pointer to an initialized Memory struct with size of 64 bytes
+//
+// Returns:
+//  a pointer to the newly created CPU
 func NewCPU(ram *Memory, registers *Memory) (cpu *CPU) {
 	log.SetPrefix("CPU: ")
 
@@ -71,12 +69,10 @@ func NewCPU(ram *Memory, registers *Memory) (cpu *CPU) {
 	return
 }
 
-/*
-* Fetches the next instruction and increments the program counter
-* Parameters: none
-* Returns:
-*		encoded instruction - 32-bit unsigned integer (or a word)
- */
+// Fetches the next instruction and increments the program counter
+//
+// Returns:
+//  encoded instruction - 32-bit unsigned integer (i.e., a word)
 func (cpu *CPU) Fetch() (instruction uint32) {
 	// Read address stored in the PC
 	address, err := cpu.registers.ReadWord(PC)
@@ -96,16 +92,12 @@ func (cpu *CPU) Fetch() (instruction uint32) {
 	return
 }
 
-/*
-* Decodes instruction. Currently does nothing.
- */
+// Decodes an instruction. (Currently does nothing.)
 func (cpu *CPU) Decode() {
 	// Does nothing; this is a stub.
 }
 
-/*
-* Executes instruction. Currently pauses execution 0.25 seconds.
- */
+// Executes an instruction. (Currently pauses execution 0.25 seconds.)
 func (cpu *CPU) Execute() {
 	time.Sleep(time.Duration(250) * time.Millisecond)
 }

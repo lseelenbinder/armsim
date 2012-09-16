@@ -1,7 +1,6 @@
-/*
-* Filename: computer_test.go
-* Contents: the tests for the Computer struct and methods
- */
+// Filename: computer_test.go
+// Contents: the tests for the Computer struct and methods
+
 package armsim
 
 import "testing"
