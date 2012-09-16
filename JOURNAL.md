@@ -69,3 +69,38 @@
     but I've found it easily meldable and usable (a rare combination). The
     built-in libraries are quite suffcient; unfortunately, the number of
     applicable articles and packages are quite limited.
+
+## Prototype (Total time: 7 hours)
+1. Design Prototype (Time: 3 hours)
+  - Notes:
+    - Since I am using a brower-based interface, I will be using JS, HTML, and
+      CSS to power the interface. I decided to use Twitter's excellent
+      Bootstrap. Bootstrap will provide basic styling and layout tools for the
+      graphical interface.
+    - For icons, I am using Font Awesome, a free, open-source collection of SVG
+      icons.
+    - Using the basic design elements from Visual Studio and KDBG, I designed an
+      interface. The actually coding and layout did not take very long. Design
+      decisions will need to be tweaked as I connect the backend with the new
+      interface.
+  - References:
+    - [Bootstrap](http://twitter.github.com/bootstrap/index.html)
+    - [Font Awesome](http://fortawesome.github.com/Font-Awesome/)
+2. Develop CPU (Time: 2 hours)
+  - Notes:
+    - I made a design decision to make all parts of the simulator part of one Go
+      package. This simplified `import` statements, testing and code scope.
+    - I also had to rename RAM to Memory at this time.
+    - The CPU was straight-forward to implement. Testing was a little bit
+      tricky, but not anything too bad. I included a section of constants to
+      hold the positions of registers in a Memory unit. I learned a bit more
+      about Go memory modeling after fighting with a nil pointer bug for 30
+      minutes. (This was due to not using `new()`.)
+  - References:
+    - The Go docs
+3. Develop Computer (Time: 2 hours)
+  - Notes:
+    - I encountered no difficulties in designing the Computer class. The
+      computer was the simplest section to code and test. I had to fake testing
+      for the `Run()` and `Step()` methods, because they are mostly stubs at
+      this stage.
