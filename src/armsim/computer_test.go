@@ -283,4 +283,6 @@ func TestDisableTracing(t *testing.T) {
 	if f, err := os.Open("trace.log"); f == nil || err != nil {
 		t.Fatal("Trace file was not written to disk.")
 	}
+
+	c.DisableTracing()
 }

@@ -244,8 +244,10 @@ func (c *Computer) EnableTracing() (err error) {
 // Returns:
 //  err - any error that might have occured
 func (c *Computer) DisableTracing() (err error) {
-	err = c.traceFile.Close()
-	c.traceFile = nil
+	if c.traceFile != nil {
+		err = c.traceFile.Close()
+		c.traceFile = nil
+	}
 	return
 }
 
