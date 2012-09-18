@@ -67,6 +67,9 @@ type CPU struct {
 
 	// A reference to the assigned registers bank
 	registers *Memory
+
+	// Logging class
+	log *log.Logger
 }
 
 // Initializes a CPU
@@ -78,16 +81,18 @@ type CPU struct {
 // Returns:
 //  a pointer to the newly created CPU
 func NewCPU(ram *Memory, registers *Memory) (cpu *CPU) {
-	log.SetPrefix("CPU: ")
-
 	cpu = new(CPU)
-	log.Println("Created new CPU.")
 
+	cpu.log.SetPrefix("CPU: ")
+	cpu.log.Println("Created new CPU.")
+
+	// Assign RAM
 	cpu.ram = ram
-	log.Println("Assigned RAM @", &ram)
+	cpu.log.Println("Assigned RAM @", &ram)
 
+	// Assign Registers
 	cpu.registers = registers
-	log.Println("Assigned registers @", &registers)
+	cpu.log.Println("Assigned registers @", &registers)
 
 	return
 }
@@ -100,15 +105,16 @@ func (cpu *CPU) Fetch() (instruction uint32) {
 	// Read address stored in the PC
 	address, err := cpu.registers.ReadWord(PC)
 	if err != nil {
-		log.Panic("Unable to read PC.")
+		cpu.log.Panic("Unable to read PC.")
 	}
-	log.Printf("Current PC: %#x", address)
+	cpu.log.Printf("Current PC: %#x", address)
 
 	// Read instruction stored at address
 	instruction, err = cpu.ram.ReadWord(address)
 	if err != nil {
-		log.Panic("Unable to read next instruction.")
+		cpu.log.Panic("Unable to read next instruction.")
 	}
+	cpu.log.Printf("Instruction fetched: %#x", instruction)
 
 	// Increment PC
 	cpu.registers.WriteWord(PC, address+4)
@@ -118,9 +124,11 @@ func (cpu *CPU) Fetch() (instruction uint32) {
 // Decodes an instruction. (Currently does nothing.)
 func (cpu *CPU) Decode() {
 	// Does nothing; this is a stub.
+	cpu.log.Println("Decoding...")
 }
 
 // Executes an instruction. (Currently pauses execution 0.25 seconds.)
 func (cpu *CPU) Execute() {
+	cpu.log.Println("Executing...waiting...")
 	time.Sleep(time.Duration(250) * time.Millisecond)
 }

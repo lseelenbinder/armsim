@@ -3,6 +3,12 @@
 
 package armsim
 
+import (
+	"fmt"
+	"log"
+	"os"
+)
+
 // A Computer holds the RAM, registers, and CPU of the simulated ARM
 // architecture. It has methods to allow the loading and execution of a program
 // on the simulator.
@@ -16,6 +22,12 @@ type Computer struct {
 
 	// A reference to the CPU for the simulator
 	cpu *CPU
+
+	// A simple counter to track number of execution cycles
+	step_counter uint64
+
+	// Logger class
+	log *log.Logger
 }
 
 // Initializes a Computer
@@ -25,9 +37,12 @@ type Computer struct {
 //  computer
 //
 // Returns:
-//  a pointer to the newly created Computer struct
+//  a pointer to the newly created Computer
 func NewComputer(memSize uint32) (c *Computer) {
 	c = new(Computer)
+
+	// Setup logging
+	c.log  = log.New(os.Stdout, "Computer: ", 0)
 
 	// Initialize RAM of memSize
 	c.ram = NewMemory(memSize)

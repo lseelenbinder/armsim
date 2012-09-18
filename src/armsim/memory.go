@@ -12,6 +12,7 @@ import (
 // implement RAM or other like memory structures.
 type Memory struct {
 	memory []byte
+	log *log.Logger
 }
 
 // Initializes a Memory
@@ -21,11 +22,13 @@ type Memory struct {
 //
 // Returns: A pointer to the newly created Memory
 func NewMemory(nBytes uint32) (m *Memory) {
-	log.SetPrefix("Memory: ")
-
-	log.Printf("Initializing %d bytes of Memory...", nBytes)
 	m = new(Memory)
+
+	// Setup logging
+	m.log = log.New(os.Stdout, "Memory: ", 0)
+
 	// Initialize byte slice
+	m.log.Printf("Initializing %d bytes of Memory...", nBytes)
 	m.memory = make([]byte, nBytes)
 
 	return
@@ -77,12 +80,12 @@ func (m *Memory) ReadByte(address uint32) (data byte, err error) {
 //  err - any error that may have occurred
 func (m *Memory) WriteHalfWord(address uint32, data uint16) (err error) {
 	if address&1 == 1 {
-		log.Println("ERROR: Attempted to write halfword to an odd address.")
+		m.log.Println("ERROR: Attempted to write halfword to an odd address.")
 		err = errors.New("ERROR: Attempted to write halfword to an odd address.")
 		return
 	}
 
-	log.Printf("Writing halfword %#x...", data)
+	m.log.Printf("Writing halfword %#x...", data)
 	return m.writeMultiByte(address, 2, uint32(data))
 }
 
@@ -112,12 +115,12 @@ func (m *Memory) ReadHalfWord(address uint32) (data uint16, err error) {
 //  err - any error that may have occurred
 func (m *Memory) WriteWord(address uint32, data uint32) (err error) {
 	if address&1 == 1 || address%4 != 0 {
-		log.Println("ERROR: Attempted to write word to an address indivisible by 4.")
+		m.log.Println("ERROR: Attempted to write word to an address indivisible by 4.")
 		err = errors.New("ERROR: Attempted to write word to an address indivisible by 4.")
 		return
 	}
 
-	log.Printf("Writing word %#x...", data)
+	m.log.Printf("Writing word %#x...", data)
 	return m.writeMultiByte(address, 4, data)
 }
 
@@ -201,7 +204,7 @@ func (m *Memory) SetFlag(address uint32, bitPosition uint32, flag bool) (err err
 		m.WriteWord(address, word&mask)
 	}
 
-	log.Printf("word: %#x mask: %#x", word, mask)
+	m.log.Printf("word: %#x mask: %#x", word, mask)
 	return
 }
 
@@ -222,6 +225,7 @@ func ExtractBits(word uint32, startBit uint32, endBit uint32) uint32 {
 		}
 	}
 
+	log.SetPrefix("Extract bits: ")
 	log.Printf("word: %#x mask: %#x", word, mask)
 	return word & mask
 }
@@ -230,8 +234,8 @@ func ExtractBits(word uint32, startBit uint32, endBit uint32) uint32 {
 
 // Checks if an address is in the range of the memory. Returns nil or an error.
 func (m *Memory) catchAddressOutOfBounds(address uint32) (err error) {
-	if address > uint32(len(m.memory)) {
-		log.Printf("ERROR: Could not read or write memory address %d. Address is out of range.", address)
+	if address >= uint32(len(m.memory)) {
+		m.log.Printf("ERROR: Could not read or write memory address %d. Address is out of range.", address)
 		err = errors.New("ERROR: Could not read or write memory address. Address out of range.")
 	}
 
