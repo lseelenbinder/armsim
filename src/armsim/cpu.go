@@ -5,6 +5,7 @@ package armsim
 
 import (
 	"log"
+	"os"
 	"time"
 )
 
@@ -83,7 +84,7 @@ type CPU struct {
 func NewCPU(ram *Memory, registers *Memory) (cpu *CPU) {
 	cpu = new(CPU)
 
-	cpu.log.SetPrefix("CPU: ")
+	cpu.log = log.New(os.Stdout, "CPU: ", 0)
 	cpu.log.Println("Created new CPU.")
 
 	// Assign RAM
