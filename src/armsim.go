@@ -14,7 +14,7 @@ type Options struct {
 	fileName   string
 	memorySize uint
 	tracing    bool
-	gui bool
+	gui        bool
 }
 
 func main() {

@@ -298,7 +298,7 @@ func TestReset(t *testing.T) {
 
 	c.Reset()
 
-	for i := 0; i < 32 * 1024; i++ {
+	for i := 0; i < 32*1024; i++ {
 		b, _ := c.ram.ReadByte(uint32(i))
 		if b != 0 {
 			t.Fatal("Reset did not clear all the bits in RAM.")

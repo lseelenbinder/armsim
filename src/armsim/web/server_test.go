@@ -5,9 +5,9 @@
 package web
 
 import (
+	"code.google.com/p/go.net/websocket"
 	"testing"
 	"time"
-	"code.google.com/p/go.net/websocket"
 )
 
 func TestServer(t *testing.T) {

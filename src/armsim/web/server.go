@@ -1,27 +1,27 @@
 package web
 
 import (
+	"armsim"
+	"code.google.com/p/go.net/websocket"
+	"encoding/json"
 	"log"
 	"net/http"
-	"armsim"
-	"encoding/json"
-	"code.google.com/p/go.net/websocket"
 )
 
 // Generic Message
 type Message struct {
-	Type string
+	Type    string
 	Content string
 }
 
 func (m *Message) Send(ws *websocket.Conn) {
-		websocket.JSON.Send(ws, m)
+	websocket.JSON.Send(ws, m)
 }
 
 type Server struct {
 	Computer *armsim.Computer
 	FilePath string
-	Halt chan bool
+	Halt     chan bool
 	Finished chan bool
 }
 
@@ -98,7 +98,7 @@ func (s *Server) Start(ws *websocket.Conn) {
 	m.Send(ws)
 
 	// Wait for completion
-	<- s.Finished
+	<-s.Finished
 	s.UpdateStatus(ws)
 	m = Message{"status", "finished"}
 	m.Send(ws)
@@ -116,7 +116,7 @@ func (s *Server) Trace(m Message, ws *websocket.Conn) {
 	// This has the potential to create a race condition. However, I don't think
 	// it would even matter (worst case is the last trace is cut off).
 
-	if (m.Content == "on") {
+	if m.Content == "on" {
 		s.Computer.EnableTracing()
 	} else {
 		s.Computer.DisableTracing()

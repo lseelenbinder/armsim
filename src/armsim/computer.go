@@ -21,7 +21,7 @@ type Computer struct {
 
 	// A reference to the bank of CPU registers,
 	// implemented using a standard memory container
-	memSize uint32
+	memSize   uint32
 	registers *Memory
 
 	// A reference to the CPU for the simulator
@@ -39,10 +39,10 @@ type Computer struct {
 
 // Contains all the information pertaining to the emulator status
 type ComputerStatus struct {
-	Flags [4]bool
+	Flags     [4]bool
 	Registers [16]uint32
-	Memory []string
-	Steps uint64
+	Memory    []string
+	Steps     uint64
 }
 
 // Initializes a Computer
@@ -87,8 +87,8 @@ func (c *Computer) Run(halting, finishing chan bool) {
 	var h bool
 	for {
 		if len(halting) > 0 {
-			h = <- halting
-			if (h) {
+			h = <-halting
+			if h {
 				break
 			}
 		}
