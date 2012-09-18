@@ -228,3 +228,21 @@ func TestLoadELF(t *testing.T) {
 		t.Fatal("Should have failed with insuffcient memory error.")
 	}
 }
+
+func TestCompChecksum(t *testing.T) {
+	computer := NewComputer(32 * 1024)
+
+	if computer.Checksum() != computer.ram.Checksum() {
+		t.Fatal("Checksums didn't match.")
+	}
+
+	computer.ram.WriteWord(56, 0xFBC)
+	if computer.Checksum() != computer.ram.Checksum() {
+		t.Fatal("Checksums didn't match.")
+	}
+
+	computer.ram.WriteWord(0xFE, 0xabc)
+	if computer.Checksum() != computer.ram.Checksum() {
+		t.Fatal("Checksums didn't match.")
+	}
+}

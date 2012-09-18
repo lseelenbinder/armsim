@@ -198,6 +198,15 @@ func (c *Computer) LoadELF(filePath string) (err error) {
 	return
 }
 
+// Returns the checksum for the RAM
+//
+// Parameters: None
+// Returns: checksum as int32
+func (c *Computer) Checksum() (checksum int32) {
+	checksum = c.ram.Checksum()
+	return
+}
+
 // Helper Methods
 
 // Verifies if a given 4 bytes are the correct signature for an ELF header.
