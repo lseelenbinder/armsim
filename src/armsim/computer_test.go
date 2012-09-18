@@ -174,6 +174,7 @@ func TestTrace(t *testing.T) {
 func TestLoadELF(t *testing.T) {
 	var c *Computer
 	var checksum int32
+	var pc uint32
 
 	// Setup Computer
 	c = NewComputer(32 * 1024)
@@ -194,9 +195,15 @@ func TestLoadELF(t *testing.T) {
 	c = NewComputer(32 * 1024)
 	t.Log("Checksum of empty RAM: ", c.ram.Checksum())
 	err = c.LoadELF("../../test/test1.exe")
+	// Check Checksum
 	checksum = c.ram.Checksum()
 	if err != nil || checksum != 536861081 {
 		t.Fatalf("Checksum did not match for test1.exe. Expected 536861081. Got %d", checksum)
+	}
+	// Check PC (should be entry point)
+	pc, err = c.registers.ReadWord(PC)
+	if pc != 0x138 {
+		t.Fatalf("Did not set PC to correct entry point. Expected 0x138. Got %#x", pc)
 	}
 
 	// Clear Computer
@@ -208,6 +215,11 @@ func TestLoadELF(t *testing.T) {
 	if err != nil || checksum != 536864433 {
 		t.Fatalf("Checksum did not match for test2.exe. Expected 536864433. Got %d", checksum)
 	}
+	// Check PC (should be entry point)
+	pc, err = c.registers.ReadWord(PC)
+	if pc != 0x1038 {
+		t.Fatalf("Did not set PC to correct entry point. Expected 0x1038. Got %#x", pc)
+	}
 
 	// Clear RAM
 	c = NewComputer(32 * 1024)
@@ -217,6 +229,11 @@ func TestLoadELF(t *testing.T) {
 	checksum = c.ram.Checksum()
 	if err != nil || checksum != 536861199 {
 		t.Fatalf("Checksum did not match for test3.exe. Expected 536861199. Got %d", checksum)
+	}
+	// Check PC (should be entry point)
+	pc, err = c.registers.ReadWord(PC)
+	if pc != 0x1038 {
+		t.Fatalf("Did not set PC to correct entry point. Expected 0x138. Got %#x", pc)
 	}
 
 	// Clear RAM

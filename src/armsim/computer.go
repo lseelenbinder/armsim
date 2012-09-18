@@ -158,6 +158,11 @@ func (c *Computer) LoadELF(filePath string) (err error) {
 	}
 
 	c.log.Printf("Program header offset: %d", elfHeader.Phoff)
+
+	// Set PC
+	c.log.Printf("Entry Point: %d", elfHeader.Entry)
+	c.registers.WriteWord(PC, elfHeader.Entry)
+
 	c.log.Printf("# of program header entires: %d", elfHeader.Phnum)
 
 	// Seek to Program Header start
