@@ -47,8 +47,8 @@ func NewComputer(memSize uint32) (c *Computer) {
 	// Initialize RAM of memSize
 	c.ram = NewMemory(memSize)
 
-	// Initialize a register bank to contain all 16 registers
-	c.registers = NewMemory(r15 + 4)
+	// Initialize a register bank to contain all 16 registers + CPSR
+	c.registers = NewMemory(CPSR + 4)
 
 	// Initialize CPU with RAM and registers
 	c.cpu = NewCPU(c.ram, c.registers)

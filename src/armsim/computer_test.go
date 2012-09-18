@@ -33,11 +33,11 @@ func TestNewComputer(t *testing.T) {
 	if computer.registers == nil {
 		t.Fatal("Did not initialize Registers.")
 	}
-	_, err = computer.registers.ReadByte(63)
+	_, err = computer.registers.ReadByte(67)
 	if err != nil {
 		t.Fatal("Did not initialize registers to correct size (too small).")
 	}
-	_, err = computer.registers.ReadByte(65)
+	_, err = computer.registers.ReadByte(68)
 	if err == nil {
 		t.Fatal("Did not initialize registers to correct size (too big).")
 	}
