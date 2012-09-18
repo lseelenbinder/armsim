@@ -170,3 +170,61 @@ func TestTrace(t *testing.T) {
 		}
 	}
 }
+
+func TestLoadELF(t *testing.T) {
+	var c *Computer
+	var checksum int32
+
+	// Setup Computer
+	c = NewComputer(32 * 1024)
+
+	// Load Non-existent Test File
+	err := c.LoadELF("asdfasdfaitheirhasdifhadf")
+	if err == nil {
+		t.Fatalf("should have failed file error")
+	}
+
+	// Load Non-ELF Test File
+	err = c.LoadELF("computer.go")
+	if err == nil {
+		t.Fatalf("should have failed with magic number err")
+	}
+
+	// Load Test File 1
+	c = NewComputer(32 * 1024)
+	t.Log("Checksum of empty RAM: ", c.ram.Checksum())
+	err = c.LoadELF("../../test/test1.exe")
+	checksum = c.ram.Checksum()
+	if err != nil || checksum != 536861081 {
+		t.Fatalf("Checksum did not match for test1.exe. Expected 536861081. Got %d", checksum)
+	}
+
+	// Clear Computer
+	c = NewComputer(32 * 1024)
+
+	// Load Test File 2
+	err = c.LoadELF("../../test/test2.exe")
+	checksum = c.ram.Checksum()
+	if err != nil || checksum != 536864433 {
+		t.Fatalf("Checksum did not match for test2.exe. Expected 536864433. Got %d", checksum)
+	}
+
+	// Clear RAM
+	c = NewComputer(32 * 1024)
+
+	// Load Test File 3
+	err = c.LoadELF("../../test/test3.exe")
+	checksum = c.ram.Checksum()
+	if err != nil || checksum != 536861199 {
+		t.Fatalf("Checksum did not match for test3.exe. Expected 536861199. Got %d", checksum)
+	}
+
+	// Clear RAM
+	c = NewComputer(8)
+
+	// Load Test 3 into insuffcient memory
+	err = c.LoadELF("../../test/test3.exe")
+	if err == nil {
+		t.Fatal("Should have failed with insuffcient memory error.")
+	}
+}

@@ -4,6 +4,9 @@
 package armsim
 
 import (
+	"debug/elf"
+	"encoding/binary"
+	"errors"
 	"fmt"
 	"log"
 	"os"
@@ -111,6 +114,100 @@ func (c *Computer) Trace() (output string) {
 	}
 	c.log.Println("*****TRACE*****")
 	c.log.Print(output)
+
+	return
+}
+
+// Loads an ELF structed executable file into memory.
+//
+// Parameters:
+//  filePath - a path to the ELF file to open
+//  memory - a pointer to a suitable Memory
+//
+// Returns:
+//  err - any error that might have occured
+func (c *Computer) LoadELF(filePath string) (err error) {
+	// Setup Logging
+	defer c.log.SetPrefix(c.log.Prefix())
+	c.log.SetPrefix("Loader: ")
+
+	// Attempt to open file
+	c.log.Println("Opening file", filePath)
+	file, err := os.Open(filePath)
+	if err != nil {
+		c.log.Printf("Error reading file (perhaps it doesn't exist)...")
+		return
+	}
+	defer file.Close()
+
+	// Test magic bytes
+	c.log.Println("Testing magic bytes...")
+	if err = verifyMagic(file); err != nil {
+		c.log.Println(err)
+		return
+	}
+
+	// Read ELF Header
+	c.log.Println("Reading ELF header...")
+	file.Seek(0, 0)
+	elfHeader := new(elf.Header32)
+	err = binary.Read(file, binary.LittleEndian, elfHeader)
+	if err != nil {
+		c.log.Println("Error reading ELF header...")
+		return
+	}
+
+	c.log.Printf("Program header offset: %d", elfHeader.Phoff)
+	c.log.Printf("# of program header entires: %d", elfHeader.Phnum)
+
+	// Seek to Program Header start
+	file.Seek(int64(elfHeader.Phoff), 0)
+
+	// Read Program Headers
+	c.log.Println("Reading program headers...")
+	pHeader := new(elf.Prog32)
+	for i := 0; uint16(i) < elfHeader.Phnum; i++ {
+		// Seek to program header
+		offset := int64(elfHeader.Phoff) + int64(i)*int64(elfHeader.Phentsize)
+		file.Seek(offset, 0)
+
+		// Read program header
+		err = binary.Read(file, binary.LittleEndian, pHeader)
+		if err != nil {
+			c.log.Printf("Error reading program header %d...", i)
+			return
+		}
+
+		c.log.Printf("Reading program header %d of %d - Offset: %d, Size: %d, Address: %d", i+1, elfHeader.Phnum, pHeader.Off, pHeader.Filesz, pHeader.Vaddr)
+		// Seek to offset
+		file.Seek(int64(pHeader.Off), 0)
+
+		// Read to RAM
+		b := make([]byte, 1)
+		var i uint32 = 0
+		for ; i < pHeader.Filesz; i++ {
+			file.Read(b)
+			err = c.ram.WriteByte(pHeader.Vaddr+i, b[0])
+			if err != nil {
+				err = errors.New("Insuffcient memory.")
+				return
+			}
+		}
+	}
+
+	return
+}
+
+// Helper Methods
+
+// Verifies if a given 4 bytes are the correct signature for an ELF header.
+func verifyMagic(file *os.File) (err error) {
+	magic := [4]byte{}
+
+	err = binary.Read(file, binary.LittleEndian, &magic)
+	if err != nil || magic[0] != 0x7f || magic[1] != 'E' || magic[2] != 'L' || magic[3] != 'F' {
+		err = errors.New("ELF magic bytes were incorrect.")
+	}
 
 	return
 }
