@@ -35,7 +35,6 @@ func main() {
 	// Initialize Computer
 	c := armsim.NewComputer(uint32(options.memorySize))
 
-	tracing := make(chan bool, 1)
 	halting := make(chan bool, 1)
 	finishing := make(chan bool, 1)
 
@@ -54,7 +53,7 @@ func main() {
 		cmd := exec.Command("firefox", "http://localhost:4567/")
 		cmd.Start()
 
-		s := web.Server{c, options.fileName, tracing, halting, finishing}
+		s := web.Server{c, options.fileName, halting, finishing}
 		// Launch the webserver
 		s.Launch()
 	} else {
@@ -67,7 +66,7 @@ func main() {
 		}
 
 		// Run the program
-		c.Run(tracing, halting, finishing)
+		c.Run(halting, finishing)
 	}
 }
 

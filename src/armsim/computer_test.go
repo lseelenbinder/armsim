@@ -62,7 +62,6 @@ func TestRun(t *testing.T) {
 	c := NewComputer(32 * 1024)
 	c.EnableTracing()
 
-	tracing := make(chan bool, 1)
 	halt := make(chan bool, 1)
 	finished := make(chan bool, 1)
 
@@ -72,8 +71,7 @@ func TestRun(t *testing.T) {
 	c.ram.WriteWord(0x8, 0x67)
 	c.registers.WriteWord(PC, 0x0)
 
-	go c.Run(tracing, halt, finished)
-	tracing <- true
+	go c.Run(halt, finished)
 	<-finished
 	pc, _ := c.registers.ReadWord(PC)
 
@@ -89,7 +87,7 @@ func TestRun(t *testing.T) {
 	c.ram.WriteWord(0x88, 0x67)
 	c.registers.WriteWord(PC, 0x80)
 
-	c.Run(tracing, halt, finished)
+	c.Run(halt, finished)
 	pc, _ = c.registers.ReadWord(PC)
 
 	// Should be the last position + 8

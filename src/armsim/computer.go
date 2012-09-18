@@ -81,29 +81,18 @@ func NewComputer(memSize uint32) (c *Computer) {
 // decode cycle until fetch returns false (signifying an instruction of 0x0).
 //
 // Parameters:
-//  tracing - chan to enable midstream disabling of tracing
-//  haltng - chan to enable midstream halting of running (for Stop/Break in gui)
-//  finishing - chan to return finished result
-func (c *Computer) Run(tracing, halting, finishing chan bool) {
-	var t, h bool
+//  haltng - channel to enable midstream halting of running (for Stop/Break in gui)
+//  finishing - channel to allow caller to know when Run() is finished
+func (c *Computer) Run(halting, finishing chan bool) {
+	var h bool
 	for {
-		if len(tracing) > 0 {
-			c.log.Println("Waiting on tracing send...")
-			t = <-tracing
-
-			if (t) {
-				c.EnableTracing()
-			} else {
-				c.DisableTracing()
-			}
-		}
-
 		if len(halting) > 0 {
 			h = <- halting
 			if (h) {
 				break
 			}
 		}
+
 		if !c.Step() {
 			break
 		}

@@ -80,6 +80,22 @@ $(document).ready(function () {
     ws.send("reset");
   });
 
+  $("#trace-button").click(function(e) {
+    var content = "on";
+    if ($("#trace-button i").hasClass("icon-eye-close")) {
+      // Turn tracing off
+      content = "off";
+    }
+
+    ws.send("trace", content);
+
+    $("#trace-button").html("<i class='icon-eye-"
+      + ((content == "on") ? "close" : "open") +
+      "'></i> Turn-" + (content == "on" ? "off" : "on") + " Tracking");
+    $("#trace-button").toggleClass("btn-danger");
+    $("#trace-button").toggleClass("btn-success");
+  });
+
   $("#memory-search").submit(function(e) {
     e.preventDefault();
     $(".memory-row").removeClass("active");
