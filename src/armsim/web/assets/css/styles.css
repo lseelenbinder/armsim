@@ -1,0 +1,61 @@
+html {
+	margin-top: 20px;
+}
+#instructions {
+	max-height: 200px;
+	overflow-y: hidden;
+	font-family: "Consolas", monospace;
+}
+.instruction {
+	padding: 2px 5px;
+}
+.instruction .address, .memory-row .address {
+	margin-right: 30px;
+}
+.instruction .address:after, .memory-row .address:after {
+	content: ":";
+}
+.instruction.alert {
+	margin: 0px;
+}
+.instruction .encoded {
+	margin-right: 30px;
+}
+.instruction .decoded {
+	margin-right: 30px;
+	font-weight: bold;
+}
+.instruction .arguments {
+	font-weight: normal;
+}
+
+.icon-flag.active {
+  color: red;
+}
+
+#flags {
+  margin-left: 0;
+}
+#flags li {
+  display: inline;
+}
+
+#terminal .term {
+	height: 200px;
+	border-radius: 5px;
+}
+
+#memory-container {
+	max-height: 200px;
+	overflow: auto;
+	font-family: "Consolas", monospace;
+}
+
+.memory-row .address {
+  font-weight: bold;
+}
+
+.memory-row.active {
+  font-weight: bold;
+  color: green;
+}

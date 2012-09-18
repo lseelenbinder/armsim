@@ -13,6 +13,7 @@ import (
 // implement RAM or other like memory structures.
 type Memory struct {
 	memory []byte
+	Memory *[]byte
 	log    *log.Logger
 }
 
@@ -31,6 +32,7 @@ func NewMemory(nBytes uint32) (m *Memory) {
 	// Initialize byte slice
 	m.log.Printf("Initializing %d bytes of Memory...", nBytes)
 	m.memory = make([]byte, nBytes)
+	m.Memory = &m.memory
 
 	return
 }
@@ -86,7 +88,6 @@ func (m *Memory) WriteHalfWord(address uint32, data uint16) (err error) {
 		return
 	}
 
-	m.log.Printf("Writing halfword %#x...", data)
 	return m.writeMultiByte(address, 2, uint32(data))
 }
 
@@ -121,7 +122,6 @@ func (m *Memory) WriteWord(address uint32, data uint32) (err error) {
 		return
 	}
 
-	m.log.Printf("Writing word %#x...", data)
 	return m.writeMultiByte(address, 4, data)
 }
 

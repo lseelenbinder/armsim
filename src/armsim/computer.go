@@ -21,6 +21,7 @@ type Computer struct {
 
 	// A reference to the bank of CPU registers,
 	// implemented using a standard memory container
+	memSize uint32
 	registers *Memory
 
 	// A reference to the CPU for the simulator
@@ -34,6 +35,14 @@ type Computer struct {
 
 	// Trace Log File
 	traceFile *os.File
+}
+
+// Contains all the information pertaining to the emulator status
+type ComputerStatus struct {
+	Flags [4]bool
+	Registers [16]uint32
+	Memory []string
+	Steps uint64
 }
 
 // Initializes a Computer
@@ -51,6 +60,7 @@ func NewComputer(memSize uint32) (c *Computer) {
 	c.log = log.New(os.Stdout, "Computer: ", 0)
 
 	// Initialize RAM of memSize
+	c.memSize = memSize
 	c.ram = NewMemory(memSize)
 
 	// Initialize a register bank to contain all 16 registers + CPSR
@@ -69,12 +79,61 @@ func NewComputer(memSize uint32) (c *Computer) {
 
 // Simulates the running of the a computer. It executes the fetch, execute,
 // decode cycle until fetch returns false (signifying an instruction of 0x0).
-func (c *Computer) Run() {
+//
+// Parameters:
+//  tracing - chan to enable midstream disabling of tracing
+//  haltng - chan to enable midstream halting of running (for Stop/Break in gui)
+//  finishing - chan to return finished result
+func (c *Computer) Run(tracing, halting, finishing chan bool) {
+	var t, h bool
 	for {
+		if len(tracing) > 0 {
+			c.log.Println("Waiting on tracing send...")
+			t = <-tracing
+
+			if (t) {
+				c.EnableTracing()
+			} else {
+				c.DisableTracing()
+			}
+		}
+
+		if len(halting) > 0 {
+			h = <- halting
+			if (h) {
+				break
+			}
+		}
 		if !c.Step() {
 			break
 		}
 	}
+
+	// Let caller know we are finished
+	finishing <- true
+}
+
+func (c *Computer) Status() (status ComputerStatus) {
+	status.Flags[0], _ = c.registers.TestFlag(CPSR, N) // Negative Flag
+	status.Flags[1], _ = c.registers.TestFlag(CPSR, Z) // Zero Flag
+	status.Flags[2], _ = c.registers.TestFlag(CPSR, C) // Carry Flag
+	status.Flags[3], _ = c.registers.TestFlag(CPSR, F) // Overflow Flag
+	c.log.Println("Flags:", status.Flags)
+
+	for i := 0; i < 16; i++ {
+		status.Registers[i], _ = c.registers.ReadWord(uint32(i * 4))
+	}
+
+	var i uint32
+	status.Memory = make([]string, c.memSize)
+	for ; i < c.memSize; i++ {
+		b, _ := c.ram.ReadByte(i)
+		status.Memory[i] = fmt.Sprintf("%x", b)
+	}
+
+	status.Steps = c.step_counter
+
+	return
 }
 
 // Performs a single execution cycle. Take no parameters and returns a boolean
@@ -249,6 +308,17 @@ func (c *Computer) DisableTracing() (err error) {
 		c.traceFile = nil
 	}
 	return
+}
+
+// Resets memory and registers to a clean state (all values zeroed out).
+func (c *Computer) Reset() {
+	for i := 0; uint32(i) < c.memSize; i += 4 {
+		c.ram.WriteWord(uint32(i), 0x0)
+	}
+
+	for i := 0; uint32(i) < (CPSR + 4); i += 4 {
+		c.registers.WriteWord(uint32(i), 0x0)
+	}
 }
 
 // Helper Methods

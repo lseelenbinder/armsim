@@ -60,6 +60,11 @@ func TestNewComputer(t *testing.T) {
 func TestRun(t *testing.T) {
 	// Setup
 	c := NewComputer(32 * 1024)
+	c.EnableTracing()
+
+	tracing := make(chan bool, 1)
+	halt := make(chan bool, 1)
+	finished := make(chan bool, 1)
 
 	// Simulate loading program and PC
 	c.ram.WriteWord(0x0, 0x67)
@@ -67,7 +72,9 @@ func TestRun(t *testing.T) {
 	c.ram.WriteWord(0x8, 0x67)
 	c.registers.WriteWord(PC, 0x0)
 
-	c.Run()
+	go c.Run(tracing, halt, finished)
+	tracing <- true
+	<-finished
 	pc, _ := c.registers.ReadWord(PC)
 
 	// Should be the last position + 8
@@ -82,7 +89,7 @@ func TestRun(t *testing.T) {
 	c.ram.WriteWord(0x88, 0x67)
 	c.registers.WriteWord(PC, 0x80)
 
-	c.Run()
+	c.Run(tracing, halt, finished)
 	pc, _ = c.registers.ReadWord(PC)
 
 	// Should be the last position + 8
@@ -285,4 +292,24 @@ func TestDisableTracing(t *testing.T) {
 	}
 
 	c.DisableTracing()
+}
+
+func TestReset(t *testing.T) {
+	c := NewComputer(32 * 1024)
+	c.LoadELF("../../test/test1.exe")
+
+	c.Reset()
+
+	for i := 0; i < 32 * 1024; i++ {
+		b, _ := c.ram.ReadByte(uint32(i))
+		if b != 0 {
+			t.Fatal("Reset did not clear all the bits in RAM.")
+		}
+	}
+	for i := 0; i < 68; i++ {
+		b, _ := c.registers.ReadByte(uint32(i))
+		if b != 0 {
+			t.Fatal("Reset did not clear all the bits in the registers.")
+		}
+	}
 }
