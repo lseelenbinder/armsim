@@ -96,7 +96,7 @@ func (c *Computer) Step() bool {
 	c.step_counter++
 
 	if c.traceFile != nil {
-		c.Trace()
+		c.traceFile.WriteString(c.Trace() + "\n")
 	}
 
 	return true
@@ -124,7 +124,6 @@ func (c *Computer) Trace() (output string) {
 			output += "\t"
 		}
 	}
-	c.log.Println("*****TRACE*****")
 	c.log.Print(output)
 
 	return
