@@ -37,12 +37,14 @@ type Computer struct {
 	traceFile *os.File
 }
 
-// Contains all the information pertaining to the emulator status
+// A ComputerStatus is an individual module designed to make it easy to pass
+// status information to external code.
 type ComputerStatus struct {
-	Flags     [4]bool
-	Registers [16]uint32
-	Memory    []string
-	Steps     uint64
+	Flags     [4]bool    // CPSR Flags
+	Registers [16]uint32 // A representation of the registers
+	Memory    []string   // A string representation of the RAM
+	Steps     uint64     // The number of steps executed so far (step_counter)
+	Checksum  int32      // Current RAM Checksum
 }
 
 // Initializes a Computer
@@ -74,6 +76,9 @@ func NewComputer(memSize uint32) (c *Computer) {
 		c.log.Println("Unable to open trace file -", err)
 	}
 
+	// Step Counter
+	c.step_counter = 1
+
 	return
 }
 
@@ -99,9 +104,17 @@ func (c *Computer) Run(halting, finishing chan bool) {
 	}
 
 	// Let caller know we are finished
-	finishing <- true
+	if finishing != nil {
+		finishing <- true
+	}
 }
 
+// Builds and returns a the status of the emulator via a ComputerStatus
+//
+// Parameters: None
+//
+// Returns:
+//  status - a ComputerStatus module fully intialized
 func (c *Computer) Status() (status ComputerStatus) {
 	status.Flags[0], _ = c.registers.TestFlag(CPSR, N) // Negative Flag
 	status.Flags[1], _ = c.registers.TestFlag(CPSR, Z) // Zero Flag
@@ -121,6 +134,7 @@ func (c *Computer) Status() (status ComputerStatus) {
 	}
 
 	status.Steps = c.step_counter
+	status.Checksum = c.Checksum()
 
 	return
 }
@@ -129,6 +143,10 @@ func (c *Computer) Status() (status ComputerStatus) {
 // signifying if the cycle was completed (a cycle will not complete if the
 // instrution fetched is 0x0).
 func (c *Computer) Step() bool {
+	if c.traceFile != nil {
+		c.traceFile.WriteString(c.Trace() + "\n")
+	}
+
 	instruction := c.cpu.Fetch()
 
 	// Don't continue if the instruction is useless
@@ -142,10 +160,6 @@ func (c *Computer) Step() bool {
 
 	// Increment step counter
 	c.step_counter++
-
-	if c.traceFile != nil {
-		c.traceFile.WriteString(c.Trace() + "\n")
-	}
 
 	return true
 }
@@ -186,6 +200,10 @@ func (c *Computer) Trace() (output string) {
 // Returns:
 //  err - any error that might have occured
 func (c *Computer) LoadELF(filePath string) (err error) {
+	// TODO: Perhaps this method could be shortened? A lot of the code is
+	// whitespace and logging code. Also, most of the code is not repeated
+	// anywhere.
+
 	// Setup Logging
 	defer c.log.SetPrefix(c.log.Prefix())
 	c.log.SetPrefix("Loader: ")
@@ -265,6 +283,7 @@ func (c *Computer) LoadELF(filePath string) (err error) {
 // Returns the checksum for the RAM
 //
 // Parameters: None
+//
 // Returns: checksum as int32
 func (c *Computer) Checksum() (checksum int32) {
 	checksum = c.ram.Checksum()
@@ -274,6 +293,7 @@ func (c *Computer) Checksum() (checksum int32) {
 // Enables tracing
 //
 // Parameters: None
+//
 // Returns:
 //  err - any error that might have occured
 func (c *Computer) EnableTracing() (err error) {
@@ -289,6 +309,7 @@ func (c *Computer) EnableTracing() (err error) {
 // Disables tracing
 //
 // Parameters: None
+//
 // Returns:
 //  err - any error that might have occured
 func (c *Computer) DisableTracing() (err error) {
@@ -308,6 +329,12 @@ func (c *Computer) Reset() {
 	for i := 0; uint32(i) < (CPSR + 4); i += 4 {
 		c.registers.WriteWord(uint32(i), 0x0)
 	}
+
+	if c.traceFile != nil {
+		c.EnableTracing()
+	}
+
+	c.step_counter = 1
 }
 
 // Helper Methods

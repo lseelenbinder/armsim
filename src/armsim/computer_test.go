@@ -55,6 +55,11 @@ func TestNewComputer(t *testing.T) {
 	if computer.cpu.registers != computer.registers {
 		t.Fatal("Did not initialize CPU with correct registers.")
 	}
+
+	// Test Step Counter
+	if computer.step_counter != 1 {
+		t.Fatal("Did not initialize step_counter with 1.")
+	}
 }
 
 func TestRun(t *testing.T) {
@@ -114,7 +119,7 @@ func TestStep(t *testing.T) {
 		t.Fatal("Did not step to 0x4.")
 	}
 	// Test step_counter
-	if c.step_counter != 1 {
+	if c.step_counter != 2 {
 		t.Fatal("Did not increment step_counter to 1.")
 	}
 
@@ -125,7 +130,7 @@ func TestStep(t *testing.T) {
 		t.Fatal("Did not step to 0x8.")
 	}
 	// Test step_counter
-	if c.step_counter != 2 {
+	if c.step_counter != 3 {
 		t.Fatal("Did not increment step_counter to 2.")
 	}
 
@@ -136,7 +141,7 @@ func TestStep(t *testing.T) {
 		t.Fatal("Did not step to 0xC.")
 	}
 	// Test step_counter
-	if c.step_counter != 3 {
+	if c.step_counter != 4 {
 		t.Fatal("Did not increment step_counter to 3.")
 	}
 }
@@ -151,12 +156,12 @@ func TestTrace(t *testing.T) {
 	c.ram.WriteWord(0x8, 0x67)
 	c.registers.WriteWord(PC, 0x0)
 
-	c.Step()
 	output := c.Trace() + "\n"
 	c.Step()
 	output += c.Trace() + "\n"
 	c.Step()
 	output += c.Trace()
+	c.Step()
 	t.Log(output)
 
 	// Open test file
@@ -295,8 +300,23 @@ func TestDisableTracing(t *testing.T) {
 func TestReset(t *testing.T) {
 	c := NewComputer(32 * 1024)
 	c.LoadELF("../../test/test1.exe")
+	c.Run(nil, nil)
 
 	c.Reset()
+
+	file, err := os.Open("trace.log")
+	if err != nil {
+		t.Fatal("Trace file should be created.")
+	}
+	b := make([]byte, 1)
+	file.Read(b)
+	if b[0] != 0 {
+		t.Fatal("Trace file should be empty.")
+	}
+
+	if c.step_counter != 1 {
+		t.Fatal("Did not reset the step counter.")
+	}
 
 	for i := 0; i < 32*1024; i++ {
 		b, _ := c.ram.ReadByte(uint32(i))

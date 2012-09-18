@@ -58,8 +58,10 @@ $(document).ready(function () {
     var filePath = prompt("Please enter your filename (relative to the executable).");
 
     disableButton("load");
-    $(this).data("html", $(this).html())
+    $(this).data("html", $(this).html());
     $(this).text("Loading...");
+
+    $("#filename").text("File: " + filePath);
 
     ws.send("load", filePath);
   });
@@ -120,6 +122,11 @@ function update(data) {
   updateFlags(data.Flags);
   updateRegisters(data.Registers);
   updateMemory(data.Memory);
+  updateChecksum(data.Checksum);
+}
+
+function updateChecksum(checksum) {
+  $("#checksum").text("Checksum: " + checksum);
 }
 
 function updateFlags(flags) {
