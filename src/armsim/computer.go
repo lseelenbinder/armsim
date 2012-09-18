@@ -31,6 +31,9 @@ type Computer struct {
 
 	// Logger class
 	log *log.Logger
+
+	// Trace Log File
+	traceFile *os.File
 }
 
 // Initializes a Computer
@@ -55,6 +58,11 @@ func NewComputer(memSize uint32) (c *Computer) {
 
 	// Initialize CPU with RAM and registers
 	c.cpu = NewCPU(c.ram, c.registers)
+
+	// Trace Log File
+	if err := c.EnableTracing(); err != nil {
+		c.log.Println("Unable to open trace file -", err)
+	}
 
 	return
 }
@@ -86,6 +94,10 @@ func (c *Computer) Step() bool {
 
 	// Increment step counter
 	c.step_counter++
+
+	if c.traceFile != nil {
+		c.Trace()
+	}
 
 	return true
 }
@@ -209,6 +221,32 @@ func (c *Computer) LoadELF(filePath string) (err error) {
 // Returns: checksum as int32
 func (c *Computer) Checksum() (checksum int32) {
 	checksum = c.ram.Checksum()
+	return
+}
+
+// Enables tracing
+//
+// Parameters: None
+// Returns:
+//  err - any error that might have occured
+func (c *Computer) EnableTracing() (err error) {
+	c.traceFile, err = os.Create("trace.log")
+	if err != nil {
+		err = errors.New("Unable to open trace file.")
+		c.log.Print(err)
+	}
+
+	return
+}
+
+// Disables tracing
+//
+// Parameters: None
+// Returns:
+//  err - any error that might have occured
+func (c *Computer) DisableTracing() (err error) {
+	err = c.traceFile.Close()
+	c.traceFile = nil
 	return
 }
 

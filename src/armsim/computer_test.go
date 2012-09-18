@@ -263,3 +263,24 @@ func TestCompChecksum(t *testing.T) {
 		t.Fatal("Checksums didn't match.")
 	}
 }
+
+func TestEnableTracing(t *testing.T) {
+	c := NewComputer(32 * 1024)
+
+	c.EnableTracing()
+	if c.traceFile == nil {
+		t.Fatal("Tracing was not enabled.")
+	}
+}
+
+func TestDisableTracing(t *testing.T) {
+	c := NewComputer(32 * 1024)
+
+	c.DisableTracing()
+	if c.traceFile != nil {
+		t.Fatal("Tracing was not disabled.")
+	}
+	if f, err := os.Open("trace.log"); f == nil || err != nil {
+		t.Fatal("Trace file was not written to disk.")
+	}
+}
