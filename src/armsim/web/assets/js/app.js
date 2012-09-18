@@ -29,6 +29,9 @@ $(document).ready(function () {
     case "update":
       update(received);
       break;
+    case "filename":
+      $("#filename").text("File: " + received.Content);
+      break;
     }
   };
 

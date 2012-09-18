@@ -71,6 +71,12 @@ func (s *Server) Serve(ws *websocket.Conn) {
 func (s *Server) SayHi(ws *websocket.Conn) {
 	m := Message{"status", "ready"}
 	m.Send(ws)
+	if s.FilePath != "" {
+		m := Message{"status", "loaded"}
+		m.Send(ws)
+		m = Message{"filename", s.FilePath}
+		m.Send(ws)
+	}
 	s.UpdateStatus(ws)
 }
 

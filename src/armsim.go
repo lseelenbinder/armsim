@@ -45,6 +45,14 @@ func main() {
 		defer c.DisableTracing()
 	}
 
+	// Load ELF File
+	err = c.LoadELF(options.fileName)
+	if err != nil {
+		fmt.Println("Unable to load file. Encountered error -", err)
+	} else {
+		fmt.Println("Loaded valid ELF file - checksum is", c.Checksum())
+	}
+
 	if options.gui {
 		log.Println("Loading webserver...")
 		fmt.Println("Please open your web browser to http://localhost:4567/ to see the gui.")
@@ -57,14 +65,6 @@ func main() {
 		// Launch the webserver
 		s.Launch()
 	} else {
-		// Load ELF File
-		err = c.LoadELF(options.fileName)
-		if err != nil {
-			fmt.Println("Unable to load file. Encountered error -", err)
-		} else {
-			fmt.Println("Loaded valid ELF file - checksum is", c.Checksum())
-		}
-
 		// Run the program
 		c.Run(halting, finishing)
 	}
