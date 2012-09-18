@@ -13,7 +13,7 @@ import (
 // implement RAM or other like memory structures.
 type Memory struct {
 	memory []byte
-	log *log.Logger
+	log    *log.Logger
 }
 
 // Initializes a Memory

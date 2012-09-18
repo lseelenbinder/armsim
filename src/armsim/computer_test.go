@@ -4,8 +4,8 @@
 package armsim
 
 import (
-	"testing"
 	"os"
+	"testing"
 )
 
 func TestComputer(t *testing.T) {

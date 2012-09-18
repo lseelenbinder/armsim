@@ -42,7 +42,7 @@ func NewComputer(memSize uint32) (c *Computer) {
 	c = new(Computer)
 
 	// Setup logging
-	c.log  = log.New(os.Stdout, "Computer: ", 0)
+	c.log = log.New(os.Stdout, "Computer: ", 0)
 
 	// Initialize RAM of memSize
 	c.ram = NewMemory(memSize)
