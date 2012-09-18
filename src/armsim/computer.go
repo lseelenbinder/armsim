@@ -81,5 +81,36 @@ func (c *Computer) Step() bool {
 	c.cpu.Decode()
 	c.cpu.Execute()
 
+	// Increment step counter
+	c.step_counter++
+
 	return true
+}
+
+// Builds a three-line status output to debug simulator.
+//
+// Returns:
+//  string contining trace output
+func (c *Computer) Trace() (output string) {
+	program_counter, _ := c.registers.ReadWord(PC)
+
+	// Build Flags int
+	cpsr, _ := c.registers.ReadWord(CPSR)
+	flags := ExtractBits(cpsr, N, F) >> F
+
+	output = fmt.Sprintf("%06d %08x %08x %04d\t", c.step_counter, program_counter,
+		c.ram.Checksum(), flags)
+	for i := 0; i < 16; i++ {
+		reg, _ := c.registers.ReadWord(uint32(i))
+		output += fmt.Sprintf("%2d=%08x", i, reg)
+		if i == 3 || i == 9 {
+			output += "\n\t"
+		} else if i != 15 {
+			output += "\t"
+		}
+	}
+	c.log.Println("*****TRACE*****")
+	c.log.Print(output)
+
+	return
 }

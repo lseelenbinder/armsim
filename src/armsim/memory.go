@@ -6,6 +6,7 @@ package armsim
 import (
 	"errors"
 	"log"
+	"os"
 )
 
 // A Memory holds a memory slice (a variable-length slice of bytes) used to
