@@ -5,6 +5,7 @@ package armsim
 
 import (
 	"errors"
+	"io"
 	"log"
 	"os"
 )
@@ -21,13 +22,17 @@ type Memory struct {
 //
 // Parameters:
 //  nBytes - size of the new memory unit in bytes
+//  logOut - an io.Writer out stream for the logger to use (or nil to use StdErr)
 //
 // Returns: A pointer to the newly created Memory
-func NewMemory(nBytes uint32) (m *Memory) {
+func NewMemory(nBytes uint32, logOut io.Writer) (m *Memory) {
 	m = new(Memory)
 
 	// Setup logging
-	m.log = log.New(os.Stdout, "Memory: ", 0)
+	if logOut == nil {
+		logOut = os.Stderr
+	}
+	m.log = log.New(logOut, "Memory: ", 0)
 
 	// Initialize byte slice
 	m.log.Printf("Initializing %d bytes of Memory...", nBytes)

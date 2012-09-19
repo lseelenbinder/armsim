@@ -17,7 +17,7 @@ func TestComputer(t *testing.T) {
 }
 
 func TestNewComputer(t *testing.T) {
-	computer := NewComputer(32 * 1024)
+	computer := NewComputer(32*1024, os.Stderr)
 
 	if computer == nil {
 		t.Fatal("Did not initialize Computer.")
@@ -64,7 +64,7 @@ func TestNewComputer(t *testing.T) {
 
 func TestRun(t *testing.T) {
 	// Setup
-	c := NewComputer(32 * 1024)
+	c := NewComputer(32*1024, os.Stderr)
 	c.EnableTracing()
 
 	halt := make(chan bool, 1)
@@ -104,7 +104,7 @@ func TestRun(t *testing.T) {
 
 func TestStep(t *testing.T) {
 	// Setup
-	c := NewComputer(32 * 1024)
+	c := NewComputer(32*1024, os.Stderr)
 
 	// Simulate loading program and PC
 	c.ram.WriteWord(0x0, 0x67)
@@ -148,7 +148,7 @@ func TestStep(t *testing.T) {
 
 func TestTrace(t *testing.T) {
 	// Setup
-	c := NewComputer(32 * 1024)
+	c := NewComputer(32*1024, os.Stderr)
 
 	// Simulate loading program and PC
 	c.ram.WriteWord(0x0, 0x67)
@@ -187,7 +187,7 @@ func TestLoadELF(t *testing.T) {
 	var pc uint32
 
 	// Setup Computer
-	c = NewComputer(32 * 1024)
+	c = NewComputer(32*1024, os.Stderr)
 
 	// Load Non-existent Test File
 	err := c.LoadELF("asdfasdfaitheirhasdifhadf")
@@ -202,7 +202,7 @@ func TestLoadELF(t *testing.T) {
 	}
 
 	// Load Test File 1
-	c = NewComputer(32 * 1024)
+	c = NewComputer(32*1024, os.Stderr)
 	t.Log("Checksum of empty RAM: ", c.ram.Checksum())
 	err = c.LoadELF("../../test/test1.exe")
 	// Check Checksum
@@ -217,7 +217,7 @@ func TestLoadELF(t *testing.T) {
 	}
 
 	// Clear Computer
-	c = NewComputer(32 * 1024)
+	c = NewComputer(32*1024, os.Stderr)
 
 	// Load Test File 2
 	err = c.LoadELF("../../test/test2.exe")
@@ -232,7 +232,7 @@ func TestLoadELF(t *testing.T) {
 	}
 
 	// Clear RAM
-	c = NewComputer(32 * 1024)
+	c = NewComputer(32*1024, os.Stderr)
 
 	// Load Test File 3
 	err = c.LoadELF("../../test/test3.exe")
@@ -247,7 +247,7 @@ func TestLoadELF(t *testing.T) {
 	}
 
 	// Clear RAM
-	c = NewComputer(8)
+	c = NewComputer(8, os.Stderr)
 
 	// Load Test 3 into insuffcient memory
 	err = c.LoadELF("../../test/test3.exe")
@@ -257,7 +257,7 @@ func TestLoadELF(t *testing.T) {
 }
 
 func TestCompChecksum(t *testing.T) {
-	computer := NewComputer(32 * 1024)
+	computer := NewComputer(32*1024, os.Stderr)
 
 	if computer.Checksum() != computer.ram.Checksum() {
 		t.Fatal("Checksums didn't match.")
@@ -275,7 +275,7 @@ func TestCompChecksum(t *testing.T) {
 }
 
 func TestEnableTracing(t *testing.T) {
-	c := NewComputer(32 * 1024)
+	c := NewComputer(32*1024, os.Stderr)
 
 	c.EnableTracing()
 	if c.traceFile == nil {
@@ -284,7 +284,7 @@ func TestEnableTracing(t *testing.T) {
 }
 
 func TestDisableTracing(t *testing.T) {
-	c := NewComputer(32 * 1024)
+	c := NewComputer(32*1024, os.Stderr)
 
 	c.DisableTracing()
 	if c.traceFile != nil {
@@ -298,7 +298,7 @@ func TestDisableTracing(t *testing.T) {
 }
 
 func TestReset(t *testing.T) {
-	c := NewComputer(32 * 1024)
+	c := NewComputer(32*1024, os.Stderr)
 	c.LoadELF("../../test/test1.exe")
 	c.Run(nil, nil)
 

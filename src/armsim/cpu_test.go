@@ -10,11 +10,11 @@ import (
 
 func TestNewCPU(t *testing.T) {
 	var cpu *CPU
-	ram := NewMemory(32 * 1024)
-	registers := NewMemory(16 * 4)
+	ram := NewMemory(32*1024, nil)
+	registers := NewMemory(16*4, nil)
 
 	// initialize CPU
-	cpu = NewCPU(ram, registers)
+	cpu = NewCPU(ram, registers, nil)
 
 	if cpu.ram != ram {
 		t.Fatal("RAM not referenced in CPU.")
@@ -26,9 +26,9 @@ func TestNewCPU(t *testing.T) {
 
 func TestFetch(t *testing.T) {
 	// Setup
-	ram := NewMemory(32 * 1024)
-	registers := NewMemory(16 * 4)
-	cpu := NewCPU(ram, registers)
+	ram := NewMemory(32*1024, nil)
+	registers := NewMemory(16*4, nil)
+	cpu := NewCPU(ram, registers, nil)
 	var word uint32
 	var test uint32
 	var pc uint32
@@ -63,9 +63,9 @@ func TestFetch(t *testing.T) {
 
 func TestDecode(t *testing.T) {
 	// Setup
-	ram := NewMemory(32 * 1024)
-	registers := NewMemory(16 * 4)
-	cpu := NewCPU(ram, registers)
+	ram := NewMemory(32*1024, nil)
+	registers := NewMemory(16*4, nil)
+	cpu := NewCPU(ram, registers, nil)
 
 	// Does nothing
 	cpu.Decode()
@@ -73,9 +73,9 @@ func TestDecode(t *testing.T) {
 
 func TestExecute(t *testing.T) {
 	// Setup
-	ram := NewMemory(32 * 1024)
-	registers := NewMemory(16 * 4)
-	cpu := NewCPU(ram, registers)
+	ram := NewMemory(32*1024, nil)
+	registers := NewMemory(16*4, nil)
+	cpu := NewCPU(ram, registers, nil)
 
 	// Should wait at least 0.25 seconds and no more than 0.26 seconds
 	start := time.Now().Nanosecond()

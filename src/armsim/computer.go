@@ -8,6 +8,7 @@ import (
 	"encoding/binary"
 	"errors"
 	"fmt"
+	"io"
 	"log"
 	"os"
 )
@@ -52,24 +53,28 @@ type ComputerStatus struct {
 // Parameters:
 //  memSize - a unsigned 32-bit integer specifying the size of the RAM in the
 //  computer
+//  logOut - an io.Writer out stream for the logger to use (or nil to use StdErr)
 //
 // Returns:
 //  a pointer to the newly created Computer
-func NewComputer(memSize uint32) (c *Computer) {
+func NewComputer(memSize uint32, logOut io.Writer) (c *Computer) {
 	c = new(Computer)
 
 	// Setup logging
-	c.log = log.New(os.Stdout, "Computer: ", 0)
+	if logOut == nil {
+		logOut = os.Stderr
+	}
+	c.log = log.New(logOut, "Computer: ", 0)
 
 	// Initialize RAM of memSize
 	c.memSize = memSize
-	c.ram = NewMemory(memSize)
+	c.ram = NewMemory(memSize, logOut)
 
 	// Initialize a register bank to contain all 16 registers + CPSR
-	c.registers = NewMemory(CPSR + 4)
+	c.registers = NewMemory(CPSR+4, logOut)
 
 	// Initialize CPU with RAM and registers
-	c.cpu = NewCPU(c.ram, c.registers)
+	c.cpu = NewCPU(c.ram, c.registers, logOut)
 
 	// Trace Log File
 	if err := c.EnableTracing(); err != nil {

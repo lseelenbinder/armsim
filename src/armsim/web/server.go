@@ -4,6 +4,7 @@ import (
 	"armsim"
 	"code.google.com/p/go.net/websocket"
 	"encoding/json"
+	"io"
 	"log"
 	"net/http"
 )
@@ -23,6 +24,7 @@ type Server struct {
 	FilePath string
 	Halt     chan bool
 	Finished chan bool
+	Log      *log.Logger
 }
 
 var globalServer Server
@@ -33,12 +35,12 @@ func (s *Server) Serve(ws *websocket.Conn) {
 
 		err := websocket.JSON.Receive(ws, &m)
 		if err != nil {
-			log.Println(err)
+			s.Log.Println(err)
 			ws.Close()
 			return
 		}
 
-		log.Println(m)
+		s.Log.Println(m)
 
 		switch m.Type {
 		case "hello": // Acknowledge ping
@@ -82,7 +84,7 @@ func (s *Server) SayHi(ws *websocket.Conn) {
 
 func (s *Server) Load(m Message, ws *websocket.Conn) {
 	path := m.Content
-	log.Println(path)
+	s.Log.Println(path)
 	s.FilePath = path
 
 	s.Computer.Reset()
@@ -138,8 +140,9 @@ func (s *Server) UpdateStatus(ws *websocket.Conn) {
 	m.Send(ws)
 }
 
-func (s *Server) Launch() {
+func (s *Server) Launch(logOut io.Writer) {
 	globalServer = *s
+	globalServer.Log = log.New(logOut, "Web Server: ", 0)
 	http.Handle("/", http.FileServer(http.Dir("assets/")))
 	http.Handle("/ws", websocket.Handler(wsHandler))
 

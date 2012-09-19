@@ -15,7 +15,7 @@ func TestNewMemory(t *testing.T) {
 // Helper method for the memory initializer testing code
 func runNewMemory(t *testing.T, nBytes uint32) {
 	// Setup
-	memory := NewMemory(nBytes)
+	memory := NewMemory(nBytes, nil)
 
 	// Ensure memory is the same length as nBytes
 	if uint32(len(memory.memory)) != nBytes {
@@ -32,7 +32,7 @@ func runNewMemory(t *testing.T, nBytes uint32) {
 
 func TestWriteByte(t *testing.T) {
 	// Setup
-	memory := NewMemory(32)
+	memory := NewMemory(32, nil)
 	var byteToWrite byte = 95
 
 	// Test under normal conditions
@@ -50,7 +50,7 @@ func TestWriteByte(t *testing.T) {
 
 func TestReadByte(t *testing.T) {
 	// Setup
-	memory := NewMemory(32)
+	memory := NewMemory(32, nil)
 	var dataToWrite byte = 0xFF
 
 	// Test normal reading of bytes
@@ -69,7 +69,7 @@ func TestReadByte(t *testing.T) {
 
 func TestWriteHalfWord(t *testing.T) {
 	// Setup
-	memory := NewMemory(32)
+	memory := NewMemory(32, nil)
 
 	// Test normal writing of halfwords
 	// Lots of tests because this is faily complicated with shifts and casts.
@@ -118,7 +118,7 @@ func TestWriteHalfWord(t *testing.T) {
 
 func TestReadHalfWord(t *testing.T) {
 	// Setup
-	memory := NewMemory(32)
+	memory := NewMemory(32, nil)
 	var hwToWrite uint16 = 0xFFFF
 
 	// Test normal reading of bytes
@@ -137,7 +137,7 @@ func TestReadHalfWord(t *testing.T) {
 
 func TestWriteWord(t *testing.T) {
 	// Setup
-	memory := NewMemory(32)
+	memory := NewMemory(32, nil)
 
 	// Test normal writing of words
 	// Lots of tests because this is faily complicated with shifts and casts.
@@ -205,7 +205,7 @@ func TestWriteWord(t *testing.T) {
 
 func TestReadWord(t *testing.T) {
 	// Setup
-	memory := NewMemory(32)
+	memory := NewMemory(32, nil)
 	var wordToWrite uint32 = 0xFFFFFFFF
 
 	// Test normal reading of bytes
@@ -231,33 +231,33 @@ func TestReadWord(t *testing.T) {
 
 func TestChecksum(t *testing.T) {
 	// Test empty memory
-	memory := NewMemory(0)
+	memory := NewMemory(0, nil)
 	if memory.Checksum() != 0 {
 		t.Fatal("zero byte memory checksum is not 0")
 	}
 
 	// Note: I used WolfmemoryAlpha to calculate these small checksums. They seem to
 	// be correct.
-	memory = NewMemory(5)
+	memory = NewMemory(5, nil)
 	if memory.Checksum() != 10 {
 		t.Fatal("checksum for 5 bytes of empty memory should be 10")
 	}
 
-	memory = NewMemory(5)
+	memory = NewMemory(5, nil)
 	memory.WriteByte(0, 0x1)
 	check := memory.Checksum()
 	if check != 11 {
 		t.Fatalf("expected checksum of %d; got: %d", 0x1^0, check)
 	}
 
-	memory = NewMemory(5)
+	memory = NewMemory(5, nil)
 	memory.WriteByte(4, 11)
 	check = memory.Checksum()
 	if check != 21 {
 		t.Fatalf("expected checksum of %d; got: %d", 21, check)
 	}
 
-	memory = NewMemory(5)
+	memory = NewMemory(5, nil)
 	memory.WriteByte(3, 0x65)
 	check = memory.Checksum()
 	if check != 109 {
@@ -269,7 +269,7 @@ func TestChecksum(t *testing.T) {
 func TestTestFlag(t *testing.T) {
 	// Setup
 	// NewMemoryialize a single word for simplicity
-	memory := NewMemory(4)
+	memory := NewMemory(4, nil)
 
 	memory.WriteWord(0, 0x0001)
 	flag, err := memory.TestFlag(0, 0)
@@ -313,7 +313,7 @@ func TestTestFlag(t *testing.T) {
 
 func TestSetFlag(t *testing.T) {
 	// Setup
-	memory := NewMemory(4)
+	memory := NewMemory(4, nil)
 
 	memory.WriteWord(0, 0xFFFFFFFF)
 	memory.SetFlag(0, 0, true)

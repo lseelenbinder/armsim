@@ -4,6 +4,7 @@
 package armsim
 
 import (
+	"io"
 	"log"
 	"os"
 	"time"
@@ -78,13 +79,17 @@ type CPU struct {
 // Parameters:
 //  ram - a pointer to an initialized Memory struct
 //  registers - a pointer to an initialized Memory struct with size of 64 bytes
+//  logOut - an io.Writer out stream for the logger to use (or nil to use StdErr)
 //
 // Returns:
 //  a pointer to the newly created CPU
-func NewCPU(ram *Memory, registers *Memory) (cpu *CPU) {
+func NewCPU(ram *Memory, registers *Memory, logOut io.Writer) (cpu *CPU) {
 	cpu = new(CPU)
 
-	cpu.log = log.New(os.Stdout, "CPU: ", 0)
+	if logOut == nil {
+		logOut = os.Stderr
+	}
+	cpu.log = log.New(logOut, "CPU: ", 0)
 	cpu.log.Println("Created new CPU.")
 
 	// Assign RAM
