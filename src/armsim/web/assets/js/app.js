@@ -1,5 +1,7 @@
 $(document).ready(function () {
-  var ws = new WebSocket("ws://" + document.URL.split("/")[2] + "/ws");
+
+  // Setup WebSockets
+  ws = new WebSocket("ws://" + document.URL.split("/")[2] + "/ws");
   ws.onopen = function() {
     ws.send("hello");
   };
@@ -48,26 +50,62 @@ $(document).ready(function () {
     }
   }
 
-
-	$("#terminal .term").terminal(function(command, term) {
-
-	}, {
+  // Setup Terminal
+	$("#terminal .term").terminal(function(command, term) {}, {
 		enabled: false,
 		greetings: "ARMSim by Luke Seelenbinder"
-	}
-	);
+	});
 
-  $("#load-button").click(function() {
-    var filePath = prompt("Please enter your filename (relative to the executable).");
-
-    disableButton("load");
-    $(this).data("html", $(this).html());
-    $(this).text("Loading...");
-
-    $("#filename").text("File: " + filePath);
-
-    ws.send("load", filePath);
+  // Setup Shortcut Keys
+  $.Shortcuts.add({
+    type: "down",
+    mask: "Ctrl+O, O, Shift+O",
+    handler: loadFile
   });
+  $.Shortcuts.add({
+    type: "down",
+    mask: "Shift+?",
+    handler: function() {
+      $('#shortcuts').modal('show')
+    }
+  });
+  $.Shortcuts.add({
+    type: "down",
+    mask: "F5",
+    handler: function() {
+      ws.send("start");
+    }
+  });
+  $.Shortcuts.add({
+    type: "down",
+    mask: "F10",
+    handler: function() {
+      ws.send("step");
+    }
+  });
+  $.Shortcuts.add({
+    type: "down",
+    mask: "Ctrl+B, B, Shift+B",
+    handler: function() {
+      ws.send("stop");
+    }
+  });
+  $.Shortcuts.add({
+    type: "down",
+    mask: "Ctrl+T, T, Shift+T",
+    handler: toggleTrace
+  });
+  $.Shortcuts.add({
+    type: "down",
+    mask: "Ctrl+R, R, Shift+R",
+    handler: function() {
+      ws.send("reset");
+    }
+  });
+  $.Shortcuts.start();
+
+  // Load Button
+  $("#load-button").click(loadFile);
 
   $("#start-button").click(function() {
     ws.send("start");
@@ -85,21 +123,7 @@ $(document).ready(function () {
     ws.send("reset");
   });
 
-  $("#trace-button").click(function(e) {
-    var content = "on";
-    if ($("#trace-button i").hasClass("icon-eye-close")) {
-      // Turn tracing off
-      content = "off";
-    }
-
-    ws.send("trace", content);
-
-    $("#trace-button").html("<i class='icon-eye-"
-      + ((content == "on") ? "close" : "open") +
-      "'></i> Turn-" + (content == "on" ? "off" : "on") + " Tracking");
-    $("#trace-button").toggleClass("btn-danger");
-    $("#trace-button").toggleClass("btn-success");
-  });
+  $("#trace-button").click(toggleTrace);
 
   $("#memory-search").submit(function(e) {
     e.preventDefault();
@@ -170,6 +194,34 @@ function updateMemory(memory) {
     var ascii = String.fromCharCode(memory[i]);
     decoded += ((/[\x00-\x1F\x80-\xFF]/.test(ascii)) ? "." : ascii);
   }
+}
+
+function toggleTrace() {
+  var content = "on";
+  if ($("#trace-button i").hasClass("icon-eye-close")) {
+    // Turn tracing off
+    content = "off";
+  }
+
+  ws.send("trace", content);
+
+  $("#trace-button").html("<i class='icon-eye-"
+    + ((content == "on") ? "close" : "open") +
+    "'></i> Turn-" + (content == "on" ? "off" : "on") + " Tracing");
+  $("#trace-button").toggleClass("btn-danger");
+  $("#trace-button").toggleClass("btn-success");
+}
+
+function loadFile() {
+  var filePath = prompt("Please enter your filename (relative to the executable).");
+
+  disableButton("load");
+  $(this).data("html", $(this).html());
+  $(this).text("Loading...");
+
+  $("#filename").text("File: " + filePath);
+
+  ws.send("load", filePath);
 }
 
 function ready() {
