@@ -67,6 +67,7 @@ func main() {
 		err = c.LoadELF(options.fileName)
 		if err != nil {
 			fmt.Println("Unable to load file. Encountered error -", err)
+			return
 		} else {
 			fmt.Println("Loaded valid ELF file - checksum is", c.Checksum())
 		}
