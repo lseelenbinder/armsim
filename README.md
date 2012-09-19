@@ -91,3 +91,12 @@ all like buttons!).
     they aren't active; if there's a flag, it's true.)
   - Registers: shows the contents of r0 - r14, plus r15, the program counter
   - Stack: (not implemented) will show the top few spots in the stack
+
+Bugs
+----
+
+- Any errors encountered by the simulator on a load are not explicitly passed to the GUI;
+  this will be fixed in a future version.
+- The GUI state could become corrupt if the right set of circumstances occur.
+- Keyboard shortcuts enable certain commands to be run even when they should be
+  disabled. This will be fixed in a future version.
