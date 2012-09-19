@@ -29,7 +29,7 @@
     - The implementation of RAM was fairly straight-forward until I got to the
       HalfWords and Words. Testing also posed a bit of a challenge because Go is
       very type safe and intrinsically prevents many standard type-related bugs;
-      hence, my test cases can be much shorter and consise.
+      hence, my test cases can be much shorter and concise.
     - Implementing HalfWords and Words proved difficult. Because the base unit is
       the byte, I needed to split up the words so I could store them
       contiguously as bytes. This required shifts, casting, and additions.
@@ -66,14 +66,14 @@
     However, due to the checkpoint nature of the project, I plan to improve the
     above mentioned aspects dramatically in the next few weeks.
   - (9/7/12) I have very much enjoyed learning Go. The language is very strict,
-    but I've found it easily meldable and usable (a rare combination). The
-    built-in libraries are quite suffcient; unfortunately, the number of
+    but I've found it meldable and usable (a rare combination). The
+    built-in libraries are quite sufficient; unfortunately, the number of
     applicable articles and packages are quite limited.
 
-## Prototype (Total time: 7 hours)
+## Prototype (Total time: 20 hours)
 1. Design Prototype (Time: 3 hours)
   - Notes:
-    - Since I am using a brower-based interface, I will be using JS, HTML, and
+    - Since I am using a browser-based interface, I will be using JS, HTML, and
       CSS to power the interface. I decided to use Twitter's excellent
       Bootstrap. Bootstrap will provide basic styling and layout tools for the
       graphical interface.
@@ -97,10 +97,48 @@
       about Go memory modeling after fighting with a nil pointer bug for 30
       minutes. (This was due to not using `new()`.)
   - References:
-    - The Go docs
+    - The Go docs (from here on out, you can assume I used these heavily)
 3. Develop Computer (Time: 2 hours)
   - Notes:
     - I encountered no difficulties in designing the Computer class. The
       computer was the simplest section to code and test. I had to fake testing
       for the `Run()` and `Step()` methods, because they are mostly stubs at
       this stage.
+4. Implement Web Server (Time: 5 hours)
+  - Because I am using a web interface for this application, I need to develop
+    a web server that supported both static assets and WebSockets communication.
+    This was a significant undertaking. I felt like I was throughly behind and
+    needed to catch up on knowledge of many ideas as I went. Thankfully, Go provides
+    some basics for web servers and the Internet yielded a lot of help.
+  - The main components of the web server are the static assets server and the
+    WebSocket server. The various concurrency issues required me to also learn
+    how Go handles concurrency, which is very unusual.
+  - Note: very few of the server methods are formally commented, this is because
+    1) I was running out of time and 2) they are very self-evident in purpose.
+  - References:
+    - [WebSocket Example](http://gary.beagledreams.com/page/go-websocket-chat.html)
+    - [Go WebSocket Implementation](https://code.google.com/p/go/source/browse/?repo=net#hg%2Fwebsocket)
+    - [ChessBuddy](https://github.com/tux21b/ChessBuddy) (for reference and ideas)
+5. Connect Design and Prototype (7 hours)
+  - I spent a very long time working on this portion of the development. I used
+    a combination of jQuery and my previously developed server to connect the
+    prototype simulator to the prototype GUI. The exercise was grueling; I had to
+    handle everything from JSON encoding to concurrency, and there were a lot of
+    design decisions to be made. I am not quite satisfied with pushing the entirety
+    of RAM for every update, but I think the local server/socket configuration
+    will mitigate speed issues. I am also concerned about browser memory issues,
+    but modern computers should perform well enough.
+  - References:
+    - [Detecting Non-Printable Characters in Javascript](http://stackoverflow.com/questions/1677644/detect-non-printable-characters-in-javascript)
+    - [Automating Scrolling in JS](http://flesler.blogspot.com/2007/10/jqueryscrollto.html)
+      & [http://demos.flesler.com/jquery/scrollTo/](http://demos.flesler.com/jquery/scrollTo/)
+    - [Keyboard Shortcuts](http://www.stepanreznikov.com/js-shortcuts/)
+    - [Bootstrap Docs](http://twitter.github.com/bootstrap/)
+6. Documentation (1 hour)
+- Notes:
+  - (9/18/12) After 12 hours straight of working on this prototype, I think I can
+    safely say I don't want to see it for a while. However, all the requirements
+    are met with more or less quality. I know there are little bugs to be found
+    and fixed and probably big bugs, too. Because of the scope of the system, I
+    don't yet feel like I have complete control over it. But, for now, it works
+    unless crazy things are thrown at it, and that is what matters.
