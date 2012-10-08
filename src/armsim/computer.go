@@ -152,16 +152,15 @@ func (c *Computer) Step() bool {
 		c.traceFile.WriteString(c.Trace() + "\n")
 	}
 
-	instruction := c.cpu.Fetch()
+	instructionBits := c.cpu.Fetch()
 
 	// Don't continue if the instruction is useless
-	if instruction == 0x0 {
+	if instructionBits == 0x0 {
 		return false
 	}
 
-	// Not easily testable at the moment
-	c.cpu.Decode()
-	c.cpu.Execute()
+	instruction := c.cpu.Decode(instructionBits)
+	c.cpu.Execute(instruction)
 
 	// Increment step counter
 	c.step_counter++

@@ -7,7 +7,6 @@ import (
 	"io"
 	"log"
 	"os"
-	"time"
 )
 
 // Registers
@@ -127,14 +126,21 @@ func (cpu *CPU) Fetch() (instruction uint32) {
 	return
 }
 
-// Decodes an instruction. (Currently does nothing.)
-func (cpu *CPU) Decode() {
-	// Does nothing; this is a stub.
+// Decodes an instruction.
+//
+// Parameters:
+//	instructionBits - word of data representing the next instruction
+//
+// Returns:
+//	instruction - a decoded instruction of type Instruction
+func (cpu *CPU) Decode(instructionBits uint32) (instruction Instruction) {
 	cpu.log.Println("Decoding...")
+	instruction = Decode(instructionBits)
+	return
 }
 
 // Executes an instruction. (Currently pauses execution 0.25 seconds.)
-func (cpu *CPU) Execute() {
-	cpu.log.Println("Executing...waiting...")
-	time.Sleep(time.Duration(250) * time.Millisecond)
+func (cpu *CPU) Execute(i Instruction) {
+	cpu.log.Println("Executing...")
+	i.Execute(cpu.ram, cpu.registers)
 }
