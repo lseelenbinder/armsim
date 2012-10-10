@@ -71,6 +71,7 @@ type CPU struct {
 
 	// Logging class
 	log *log.Logger
+	logOut io.Writer
 }
 
 // Initializes a CPU
@@ -89,6 +90,7 @@ func NewCPU(ram *Memory, registers *Memory, logOut io.Writer) (cpu *CPU) {
 		logOut = os.Stderr
 	}
 	cpu.log = log.New(logOut, "CPU: ", 0)
+	cpu.logOut = logOut
 	cpu.log.Println("Created new CPU.")
 
 	// Assign RAM
@@ -135,7 +137,7 @@ func (cpu *CPU) Fetch() (instruction uint32) {
 //	instruction - a decoded instruction of type Instruction
 func (cpu *CPU) Decode(instructionBits uint32) (instruction Instruction) {
 	cpu.log.Println("Decoding...")
-	instruction = Decode(instructionBits)
+	instruction = Decode(instructionBits, cpu.logOut)
 	return
 }
 
