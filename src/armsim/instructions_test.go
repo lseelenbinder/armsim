@@ -238,3 +238,25 @@ func TestORR(t *testing.T) {
 		t.Fatal("expected 0x35, got", word)
 	}
 }
+
+func TestMUL(t *testing.T) {
+	c := NewComputer(32, nil)
+	c.registers.WriteWord(PC, 0x4)
+	c.registers.WriteWord(r4, 0x10) // Rs
+	c.registers.WriteWord(r3, 0x30) // Rm
+	c.ram.WriteWord(0x4, 0xE0020394)
+	c.Step()
+	if word, _ := c.registers.ReadWord(r2); word != 0x300 {
+		t.Fatal("expected 0x300, got", word)
+	}
+
+	c.Reset()
+	c.registers.WriteWord(PC, 0x4)
+	c.registers.WriteWord(r4, 0x15) // Rs
+	c.registers.WriteWord(r3, 0x30) // Rm
+	c.ram.WriteWord(0x4, 0xE0020394)
+	c.Step()
+	if word, _ := c.registers.ReadWord(r2); word != 0x3f0 {
+		t.Fatal("expected 0x3f0, got", word)
+	}
+}

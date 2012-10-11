@@ -132,6 +132,7 @@ const (
 	BIC = 0xE // 1110
 	MOV byte = 0xD // 1101
 	MNV = 0xF // 1111
+	MUL = 0x10 // 1 0000 (custom opcode)
 )
 
 // Executes a data instruction
@@ -151,6 +152,7 @@ func (di *dataInstruction) Execute(cpu *CPU) (err error) {
 	rn, _ := cpu.FetchRegisterFromInstruction(di.Rn)
 
 	// Assertain specific instruction
+
 	switch di.Opcode {
 	case MOV, MNV:
 		// Negate for MNV
@@ -179,6 +181,11 @@ func (di *dataInstruction) Execute(cpu *CPU) (err error) {
 	case BIC:
 		// Rd = Rn AND NOT shifter_operand
 		cpu.WriteRegisterFromInstruction(di.Rd, rn &^ result)
+	case MUL:
+		// Rd = Rm * Rs
+		// This instruction is highly irregular, so the actual calculation is:
+		// Rn = Rm * Rs
+		cpu.WriteRegisterFromInstruction(di.Rn, di.shifter.Rm() * di.shifter.Rs())
 	}
 	return
 }
@@ -209,6 +216,11 @@ func (di *dataInstruction) decode(base *baseInstruction) (err error) {
 	// Get S bit
 	di.S = ExtractShiftBits(di.InstructionBits, 20, 21) == 1
 	di.log.Printf("S bit: %01t", di.S)
+
+	// Check for MUL
+	if di.I == false && ExtractShiftBits(di.InstructionBits, 4, 5) == 1 && ExtractShiftBits(di.InstructionBits, 7, 8) == 1 {
+		di.Opcode = MUL
+	}
 
 	return
 }

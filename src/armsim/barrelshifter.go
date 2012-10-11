@@ -46,6 +46,14 @@ func (b *BarrelShifter) Shift() (result uint32) {
 	return
 }
 
+func (b *BarrelShifter) Rs() (rs uint32) {
+	return b.ShiftAmount
+}
+
+func (b *BarrelShifter) Rm() (rs uint32) {
+	return b.Data
+}
+
 func ror(value uint32, nBits uint32) (result uint32) {
 	return (value >> nBits) | (value<<(32-nBits))&0xFFFFFFFF
 }
