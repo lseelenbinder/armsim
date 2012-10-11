@@ -84,6 +84,9 @@ func NewComputer(memSize uint32, logOut io.Writer) (c *Computer) {
 	// Step Counter
 	c.step_counter = 1
 
+	// Set SP
+	c.cpu.WriteRegister(SP, 0x7000)
+
 	return
 }
 
@@ -207,6 +210,12 @@ func (c *Computer) LoadELF(filePath string) (err error) {
 	// TODO: Perhaps this method could be shortened? A lot of the code is
 	// whitespace and logging code. Also, most of the code is not repeated
 	// anywhere.
+
+	// Get a clean system
+	c.Reset()
+
+	// Set SP
+	c.cpu.WriteRegister(SP, 0x7000)
 
 	// Setup Logging
 	defer c.log.SetPrefix(c.log.Prefix())
