@@ -81,3 +81,19 @@ func TestMOV(t *testing.T) {
 		t.Fatalf("Exepected 0x8, got 0x%x", word)
 	}
 }
+func TestMNV(t *testing.T) {
+	// Test MNV, rely on MOV tests mostly
+	c := NewComputer(32, nil)
+	c.registers.WriteWord(PC, 0x4)
+	c.ram.WriteWord(0x4, 0xE3E02030)
+	c.Step()
+	if word, _ := c.registers.ReadWord(r2); word != 0xFFFFFFCF {
+		t.Fatal("Exepected 0x0xFFFFFFCF, got", word)
+	}
+
+	c.ram.WriteWord(0x8, 0xE3E02036)
+	c.Step()
+	if word, _ := c.registers.ReadWord(r2); word != 0xFFFFFFC9 {
+		t.Fatal("Exepected 54, got", word)
+	}
+}

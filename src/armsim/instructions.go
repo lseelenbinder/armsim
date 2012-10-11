@@ -124,6 +124,7 @@ type dataInstruction struct {
 
 const (
 	MOV byte = 0xD // 1101
+	MNV = 0xF // 1111
 )
 
 // Executes a data instruction
@@ -138,9 +139,13 @@ func (di *dataInstruction) Execute(cpu *CPU) (err error) {
 	di.log.SetPrefix("Data Instruction (Execute): ")
 	// Assertain specific instruction
 	switch di.Opcode {
-	case MOV:
+	case MOV, MNV:
 		di.shifter = NewFromOperand2(di.Operand2, di.I, cpu)
-		cpu.WriteRegisterFromInstruction(di.Rd, di.shifter.Shift())
+		value := di.shifter.Shift()
+		if di.Opcode == MNV {
+			value ^= 0xFFFFFFFF
+		}
+		cpu.WriteRegisterFromInstruction(di.Rd, value)
 	}
 	return
 }
