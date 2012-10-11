@@ -40,6 +40,10 @@ html {
   display: inline;
 }
 
+#registers tr td:last-child {
+  font-family: "Consolas", monospace;
+}
+
 #terminal .term {
 	height: 200px;
 	border-radius: 5px;
