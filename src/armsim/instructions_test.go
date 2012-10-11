@@ -198,3 +198,23 @@ func TestBIC(t *testing.T) {
 		t.Fatal("expected 0x0, got", word)
 	}
 }
+
+func TestEOR(t *testing.T) {
+	c := NewComputer(32, nil)
+	c.registers.WriteWord(PC, 0x4)
+	c.registers.WriteWord(r4, 0x10)
+	c.ram.WriteWord(0x4, 0xE2242030)
+	c.Step()
+	if word, _ := c.registers.ReadWord(r2); word != 0x20 {
+		t.Fatal("expected 0x20, got", word)
+	}
+
+	c.Reset()
+	c.registers.WriteWord(PC, 0x4)
+	c.registers.WriteWord(r4, 0x15)
+	c.ram.WriteWord(0x4, 0xE2242030)
+	c.Step()
+	if word, _ := c.registers.ReadWord(r2); word != 0x25 {
+		t.Fatal("expected 0x25, got", word)
+	}
+}

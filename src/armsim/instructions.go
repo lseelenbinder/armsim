@@ -124,6 +124,7 @@ type dataInstruction struct {
 
 const (
 	AND = 0x0 // 0000
+	EOR = 0x1 // 0001
 	SUB = 0x2 // 0010
 	RSB = 0x3 // 0011
 	ADD = 0x4 // 0100
@@ -168,6 +169,9 @@ func (di *dataInstruction) Execute(cpu *CPU) (err error) {
 	case AND:
 		// Rd = Rn AND shifter_operand
 		cpu.WriteRegisterFromInstruction(di.Rd, rn & result)
+	case EOR:
+		// Rd = Rn XOR shifter_operand
+		cpu.WriteRegisterFromInstruction(di.Rd, rn ^ result)
 	case BIC:
 		// Rd = Rn AND NOT shifter_operand
 		cpu.WriteRegisterFromInstruction(di.Rd, rn &^ result)
