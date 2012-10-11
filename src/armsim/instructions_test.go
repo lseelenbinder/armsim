@@ -139,6 +139,26 @@ func TestSUB(t *testing.T) {
 	}
 }
 
+func TestRSB(t *testing.T) {
+	c := NewComputer(32, nil)
+	c.registers.WriteWord(PC, 0x4)
+	c.registers.WriteWord(r4, 0x20)
+	c.ram.WriteWord(0x4, 0xE2642030)
+	c.Step()
+	if word, _ := c.registers.ReadWord(r2); word != 0x10 {
+		t.Fatal("expected 0x10, got", word)
+	}
+
+	c.Reset()
+	c.registers.WriteWord(PC, 0x4)
+	c.registers.WriteWord(r4, 0x15)
+	c.ram.WriteWord(0x4, 0xE2642030)
+	c.Step()
+	if word, _ := c.registers.ReadWord(r2); word != 0x1B{
+		t.Fatal("expected 0x30, got", word)
+	}
+}
+
 func TestAND(t *testing.T) {
 	c := NewComputer(32, nil)
 	c.registers.WriteWord(PC, 0x4)

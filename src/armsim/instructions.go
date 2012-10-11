@@ -123,12 +123,13 @@ type dataInstruction struct {
 }
 
 const (
+	AND = 0x0 // 0000
+	SUB = 0x2 // 0010
+	RSB = 0x3 // 0011
+	ADD = 0x4 // 0100
+	BIC = 0xE // 1110
 	MOV byte = 0xD // 1101
 	MNV = 0xF // 1111
-	ADD = 0x4 // 0100
-	SUB = 0x2 // 0010
-	AND = 0x0 // 0000
-	BIC = 0xE // 1110
 )
 
 // Executes a data instruction
@@ -161,6 +162,9 @@ func (di *dataInstruction) Execute(cpu *CPU) (err error) {
 	case SUB:
 		// Rd = Rn - shifter_operand
 		cpu.WriteRegisterFromInstruction(di.Rd, rn - result)
+	case RSB:
+		// Rd = shifter_operand - Rn
+		cpu.WriteRegisterFromInstruction(di.Rd, result - rn)
 	case AND:
 		// Rd = Rn AND shifter_operand
 		cpu.WriteRegisterFromInstruction(di.Rd, rn & result)
