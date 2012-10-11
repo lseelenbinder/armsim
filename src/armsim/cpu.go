@@ -156,8 +156,11 @@ func (cpu *CPU) Execute(i Instruction) {
 //  value - the register's content
 func (cpu *CPU) FetchRegister(r uint32) (value uint32, err error) {
 	value, err = cpu.registers.ReadWord(r)
+
+	// Because of pipelining, any PC access will need to be +8. However, the PC is already
+	// incremented, so it will only be +4.
 	if r == PC {
-		value += 8
+		value += 4
 	}
 	return
 }
