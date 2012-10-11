@@ -89,7 +89,7 @@ func TestWriteHalfWord(t *testing.T) {
 	b1, _ = memory.ReadByte(0)
 	b2, _ = memory.ReadByte(1)
 
-	if err != nil || b1 != 0xFF || b2 != 0x00 {
+	if err != nil || b1 != 0x00 || b2 != 0xFF {
 		t.Fatal("Did not properly write half word. Expected:", hwToWrite, "Got:", b1, b2)
 	}
 
@@ -98,7 +98,7 @@ func TestWriteHalfWord(t *testing.T) {
 	b1, _ = memory.ReadByte(0)
 	b2, _ = memory.ReadByte(1)
 
-	if err != nil || b1 != 0x0F || b2 != 0x0D {
+	if err != nil || b1 != 0x0D || b2 != 0x0F {
 		t.Fatal("Did not properly write half word. Expected:", hwToWrite, "Got:", b1, b2)
 	}
 
@@ -175,7 +175,7 @@ func TestWriteWord(t *testing.T) {
 	hw1, _ = memory.ReadHalfWord(4)
 	hw2, _ = memory.ReadHalfWord(6)
 
-	if err != nil || hw1 != 0x0000 || hw2 != 0x0002 {
+	if err != nil || hw1 != 0x0002 || hw2 != 0x0000 {
 		t.Fatalf("expected: %#x to be written instead got %#x & %#x", wordToWrite, hw1, hw2)
 	}
 
