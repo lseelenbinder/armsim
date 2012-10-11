@@ -128,6 +128,7 @@ const (
 	SUB = 0x2 // 0010
 	RSB = 0x3 // 0011
 	ADD = 0x4 // 0100
+	ORR = 0xC // 1100
 	BIC = 0xE // 1110
 	MOV byte = 0xD // 1101
 	MNV = 0xF // 1111
@@ -172,6 +173,9 @@ func (di *dataInstruction) Execute(cpu *CPU) (err error) {
 	case EOR:
 		// Rd = Rn XOR shifter_operand
 		cpu.WriteRegisterFromInstruction(di.Rd, rn ^ result)
+	case ORR:
+		// Rd = Rn OR shifter_operand
+		cpu.WriteRegisterFromInstruction(di.Rd, rn | result)
 	case BIC:
 		// Rd = Rn AND NOT shifter_operand
 		cpu.WriteRegisterFromInstruction(di.Rd, rn &^ result)

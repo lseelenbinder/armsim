@@ -218,3 +218,23 @@ func TestEOR(t *testing.T) {
 		t.Fatal("expected 0x25, got", word)
 	}
 }
+
+func TestORR(t *testing.T) {
+	c := NewComputer(32, nil)
+	c.registers.WriteWord(PC, 0x4)
+	c.registers.WriteWord(r4, 0x10)
+	c.ram.WriteWord(0x4, 0xE3842030)
+	c.Step()
+	if word, _ := c.registers.ReadWord(r2); word != 0x30 {
+		t.Fatal("expected 0x30, got", word)
+	}
+
+	c.Reset()
+	c.registers.WriteWord(PC, 0x4)
+	c.registers.WriteWord(r4, 0x15)
+	c.ram.WriteWord(0x4, 0xE3842030)
+	c.Step()
+	if word, _ := c.registers.ReadWord(r2); word != 0x35 {
+		t.Fatal("expected 0x35, got", word)
+	}
+}
