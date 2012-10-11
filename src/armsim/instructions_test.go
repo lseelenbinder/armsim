@@ -36,7 +36,7 @@ func TestMOV(t *testing.T) {
 	c.ram.WriteWord(0x4, 0xe3a02130)
 	c.Step()
 	if word, _ := c.registers.ReadWord(r2); word != 0xc {
-		t.Fatalf("expected 0x12, got 0x%x", word)
+		t.Fatalf("expected 0xC, got 0x%x", word)
 	}
 
 	// Test MOV immediate shift
@@ -154,7 +154,7 @@ func TestRSB(t *testing.T) {
 	c.registers.WriteWord(r4, 0x15)
 	c.ram.WriteWord(0x4, 0xE2642030)
 	c.Step()
-	if word, _ := c.registers.ReadWord(r2); word != 0x1B{
+	if word, _ := c.registers.ReadWord(r2); word != 0x1B {
 		t.Fatal("expected 0x30, got", word)
 	}
 }

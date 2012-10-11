@@ -265,7 +265,7 @@ func (m *Memory) writeMultiByte(address uint32, nBytes int, data uint32) (err er
 	}
 
 	for i := 0; i < nBytes; i++ {
-		m.memory[address+uint32(nBytes-1-i)] = byte(data >> uint(8*i))
+		m.memory[address+uint32(i)] = byte(data >> uint(8*i))
 	}
 
 	return
@@ -278,7 +278,7 @@ func (m *Memory) readMultiByte(address uint32, nBytes int) (data uint32, err err
 		return
 	}
 
-	for i := 0; i < nBytes; i++ {
+	for i := nBytes-1; i >= 0; i-- {
 		data <<= 8
 		data |= uint32(m.memory[address+uint32(i)])
 	}

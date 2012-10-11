@@ -84,8 +84,6 @@ func NewComputer(memSize uint32, logOut io.Writer) (c *Computer) {
 	// Step Counter
 	c.step_counter = 1
 
-	// Set SP
-	c.cpu.WriteRegister(SP, 0x7000)
 
 	return
 }
@@ -151,10 +149,6 @@ func (c *Computer) Status() (status ComputerStatus) {
 // signifying if the cycle was completed (a cycle will not complete if the
 // instrution fetched is 0x0).
 func (c *Computer) Step() bool {
-	if c.traceFile != nil {
-		c.traceFile.WriteString(c.Trace() + "\n")
-	}
-
 	instructionBits := c.cpu.Fetch()
 
 	// Don't continue if the instruction is useless
@@ -165,9 +159,11 @@ func (c *Computer) Step() bool {
 	instruction := c.cpu.Decode(instructionBits)
 	c.cpu.Execute(instruction)
 
+	if c.traceFile != nil {
+		c.traceFile.WriteString(c.Trace() + "\n")
+	}
 	// Increment step counter
 	c.step_counter++
-
 	return true
 }
 
@@ -182,7 +178,7 @@ func (c *Computer) Trace() (output string) {
 	cpsr, _ := c.registers.ReadWord(CPSR)
 	flags := ExtractBits(cpsr, N, F) >> F
 
-	output = fmt.Sprintf("%06d %08X %08X %04d\t", c.step_counter, program_counter,
+	output = fmt.Sprintf("%06d %08X %08X %04d\t", c.step_counter, program_counter - 4,
 		c.ram.Checksum(), flags)
 	for i := 0; i < 15; i++ {
 		reg, _ := c.registers.ReadWord(uint32(i * 4))
@@ -346,6 +342,9 @@ func (c *Computer) Reset() {
 	if c.traceFile != nil {
 		c.EnableTracing()
 	}
+
+	// Set SP
+	c.cpu.WriteRegister(SP, 0x7000)
 
 	c.step_counter = 1
 }

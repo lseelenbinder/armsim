@@ -143,7 +143,6 @@ func TestWriteWord(t *testing.T) {
 	// Lots of tests because this is faily complicated with shifts and casts.
 
 	var wordToWrite uint32
-
 	wordToWrite = 0xFFFFFFFF
 	err := memory.WriteWord(0, wordToWrite)
 	hw1, _ := memory.ReadHalfWord(0)
@@ -178,6 +177,17 @@ func TestWriteWord(t *testing.T) {
 
 	if err != nil || hw1 != 0x0000 || hw2 != 0x0002 {
 		t.Fatalf("expected: %#x to be written instead got %#x & %#x", wordToWrite, hw1, hw2)
+	}
+
+	wordToWrite = 0xE3842030
+	err = memory.WriteWord(4, wordToWrite)
+	b1, _ := memory.ReadByte(4)
+	b2, _ := memory.ReadByte(5)
+	b3, _ := memory.ReadByte(6)
+	b4, _ := memory.ReadByte(7)
+
+	if err != nil || b1 != 0x30 || b2 != 0x20 || b3 != 0x84 || b4 != 0xE3 {
+		t.Fatalf("expected: %#x to be written instead got %#x, %#x, %#x, and %#x", wordToWrite, b1, b2, b3, b4)
 	}
 
 	// Test writing to odd address
@@ -357,6 +367,32 @@ func TestExtractBits(t *testing.T) {
 	err = ExtractBits(0xb5, 0, 33)
 	if err != 0xb5 {
 		t.Fatalf("expected: 0x05 got: %#x", err)
+	}
+
+	// Explicitly fails due to typing
+	// ExtractBits(0xb5, -1, 33)
+}
+
+func TestExtractShiftBits(t *testing.T) {
+	bits := ExtractShiftBits(0xb5, 1, 3)
+	if bits != 0x02 {
+		t.Fatalf("expected: 0x02 got: %#x", bits)
+	}
+
+	bits = ExtractShiftBits(0xb5, 0, 3)
+	if bits != 0x05 {
+		t.Fatalf("expected: 0x05 got: %#x", bits)
+	}
+
+	bits = ExtractShiftBits(0xFF00, 8, 33)
+	if bits != 0xFF {
+		t.Fatalf("expected: 0xFF got: %#x", bits)
+	}
+
+	// Implicity works
+	bits = ExtractShiftBits(0xb5, 0, 33)
+	if bits != 0xb5 {
+		t.Fatalf("expected: 0x05 got: %#x", bits)
 	}
 
 	// Explicitly fails due to typing

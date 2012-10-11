@@ -123,16 +123,16 @@ type dataInstruction struct {
 }
 
 const (
-	AND = 0x0 // 0000
-	EOR = 0x1 // 0001
-	SUB = 0x2 // 0010
-	RSB = 0x3 // 0011
-	ADD = 0x4 // 0100
-	ORR = 0xC // 1100
-	BIC = 0xE // 1110
-	MOV byte = 0xD // 1101
-	MNV = 0xF // 1111
-	MUL = 0x10 // 1 0000 (custom opcode)
+	AND byte = 0x0  // 0000
+	EOR      = 0x1  // 0001
+	SUB      = 0x2  // 0010
+	RSB      = 0x3  // 0011
+	ADD      = 0x4  // 0100
+	ORR      = 0xC  // 1100
+	BIC      = 0xE  // 1110
+	MOV      = 0xD  // 1101
+	MNV      = 0xF  // 1111
+	MUL      = 0x10 // 1 0000 (custom opcode)
 )
 
 // Executes a data instruction
@@ -145,6 +145,7 @@ const (
 //  err - an error
 func (di *dataInstruction) Execute(cpu *CPU) (err error) {
 	di.log.SetPrefix("Data Instruction (Execute): ")
+	di.log.Printf("Executing...")
 
 	// Parse the Operand2
 	di.shifter = NewFromOperand2(di.Operand2, di.I, cpu)
@@ -153,39 +154,50 @@ func (di *dataInstruction) Execute(cpu *CPU) (err error) {
 
 	// Assertain specific instruction
 
-	switch di.Opcode {
+	switch (di.Opcode) {
 	case MOV, MNV:
+		di.log.Printf("MOV/MNV")
 		// Negate for MNV
 		if di.Opcode == MNV {
 			result ^= 0xFFFFFFFF
 		}
 		cpu.WriteRegisterFromInstruction(di.Rd, result)
 	case ADD:
+		di.log.Printf("ADD")
 		// Rd = Rn + shifter_operand
-		cpu.WriteRegisterFromInstruction(di.Rd, rn + result)
+		cpu.WriteRegisterFromInstruction(di.Rd, rn+result)
 	case SUB:
+		di.log.Printf("SUB")
 		// Rd = Rn - shifter_operand
-		cpu.WriteRegisterFromInstruction(di.Rd, rn - result)
+		cpu.WriteRegisterFromInstruction(di.Rd, rn-result)
 	case RSB:
+		di.log.Printf("RSB")
 		// Rd = shifter_operand - Rn
-		cpu.WriteRegisterFromInstruction(di.Rd, result - rn)
+		cpu.WriteRegisterFromInstruction(di.Rd, result-rn)
 	case AND:
+		di.log.Printf("AND")
 		// Rd = Rn AND shifter_operand
-		cpu.WriteRegisterFromInstruction(di.Rd, rn & result)
+		cpu.WriteRegisterFromInstruction(di.Rd, rn&result)
 	case EOR:
+		di.log.Printf("EOR")
 		// Rd = Rn XOR shifter_operand
-		cpu.WriteRegisterFromInstruction(di.Rd, rn ^ result)
+		cpu.WriteRegisterFromInstruction(di.Rd, rn^result)
 	case ORR:
+		di.log.Printf("ORR")
 		// Rd = Rn OR shifter_operand
-		cpu.WriteRegisterFromInstruction(di.Rd, rn | result)
+		cpu.WriteRegisterFromInstruction(di.Rd, rn|result)
 	case BIC:
+		di.log.Printf("BIC")
 		// Rd = Rn AND NOT shifter_operand
-		cpu.WriteRegisterFromInstruction(di.Rd, rn &^ result)
+		cpu.WriteRegisterFromInstruction(di.Rd, rn&^result)
 	case MUL:
+		di.log.Printf("MUL")
 		// Rd = Rm * Rs
 		// This instruction is highly irregular, so the actual calculation is:
 		// Rn = Rm * Rs
-		cpu.WriteRegisterFromInstruction(di.Rn, di.shifter.Rm() * di.shifter.Rs())
+		cpu.WriteRegisterFromInstruction(di.Rn, di.shifter.Rm()*di.shifter.Rs())
+	default:
+		di.log.Printf("Unknown. Opcode: %04b", di.Opcode)
 	}
 	return
 }
