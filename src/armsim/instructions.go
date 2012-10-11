@@ -127,6 +127,7 @@ const (
 	MNV = 0xF // 1111
 	ADD = 0x4 // 0100
 	SUB = 0x2 // 0010
+	AND = 0x0 // 0000
 )
 
 // Executes a data instruction
@@ -159,6 +160,9 @@ func (di *dataInstruction) Execute(cpu *CPU) (err error) {
 	case SUB:
 		// Rd = Rn - shifter_operand
 		cpu.WriteRegisterFromInstruction(di.Rd, rn - result)
+	case AND:
+		// Rd = Rn & shifter_operand
+		cpu.WriteRegisterFromInstruction(di.Rd, rn & result)
 	}
 	return
 }
