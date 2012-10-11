@@ -154,7 +154,7 @@ func (di *dataInstruction) Execute(cpu *CPU) (err error) {
 
 	// Assertain specific instruction
 
-	switch (di.Opcode) {
+	switch di.Opcode {
 	case MOV, MNV:
 		di.log.Printf("MOV/MNV")
 		// Negate for MNV

@@ -84,7 +84,6 @@ func NewComputer(memSize uint32, logOut io.Writer) (c *Computer) {
 	// Step Counter
 	c.step_counter = 1
 
-
 	return
 }
 
@@ -178,7 +177,7 @@ func (c *Computer) Trace() (output string) {
 	cpsr, _ := c.registers.ReadWord(CPSR)
 	flags := ExtractBits(cpsr, N, F) >> F
 
-	output = fmt.Sprintf("%06d %08X %08X %04d\t", c.step_counter, program_counter - 4,
+	output = fmt.Sprintf("%06d %08X %08X %04d\t", c.step_counter, program_counter-4,
 		c.ram.Checksum(), flags)
 	for i := 0; i < 15; i++ {
 		reg, _ := c.registers.ReadWord(uint32(i * 4))

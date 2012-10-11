@@ -278,7 +278,7 @@ func (m *Memory) readMultiByte(address uint32, nBytes int) (data uint32, err err
 		return
 	}
 
-	for i := nBytes-1; i >= 0; i-- {
+	for i := nBytes - 1; i >= 0; i-- {
 		data <<= 8
 		data |= uint32(m.memory[address+uint32(i)])
 	}
