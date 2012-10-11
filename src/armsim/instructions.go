@@ -293,7 +293,7 @@ type loadStoreInstruction struct {
 //  instruction
 func (lsi *loadStoreInstruction) Execute() (status bool) {
 	// Stub
-	return
+	return true
 }
 
 // Decodes a load/store instruction
@@ -330,7 +330,7 @@ type branchInstruction struct {
 //  err - an error
 func (bi *branchInstruction) Execute() (status bool) {
 	// Stub
-	return
+	return true
 }
 
 // Decodes a branch instruction
@@ -370,12 +370,11 @@ func (si *swiInstruction) Execute() (status bool) {
 
 func (swi *swiInstruction) Disassemble() (assembly string) { return }
 
-type unimplementedInstruction struct {
-}
+type unimplementedInstruction struct {}
 
 // Stub method to fake execution of unimplemented instructions
 func (ui *unimplementedInstruction) Execute() (status bool) {
-	return
+	return true
 }
 
 // Stub method to fake decoding of unimplemented instructions
