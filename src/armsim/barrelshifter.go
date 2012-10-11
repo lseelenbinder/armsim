@@ -42,6 +42,15 @@ func (b *BarrelShifter) Shift() (result uint32) {
 		result = b.Data << b.ShiftAmount
 	case LSR:
 		result = b.Data >> b.ShiftAmount
+	case ASR:
+		var mask uint32 = 0x0
+		if (b.Data & 0x80000000) > 0 {
+			for i := 0; uint32(i) < b.ShiftAmount; i++ {
+				mask >>= 1
+				mask += 0x80000000
+			}
+		}
+		result = (b.Data >> b.ShiftAmount) | mask
 	}
 	return
 }

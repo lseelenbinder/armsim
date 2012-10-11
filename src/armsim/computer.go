@@ -181,12 +181,12 @@ func (c *Computer) Trace() (output string) {
 
 	output = fmt.Sprintf("%06d %08X %08X %04d\t", c.step_counter, program_counter,
 		c.ram.Checksum(), flags)
-	for i := 0; i < 16; i++ {
-		reg, _ := c.registers.ReadWord(uint32(i))
+	for i := 0; i < 15; i++ {
+		reg, _ := c.registers.ReadWord(uint32(i * 4))
 		output += fmt.Sprintf("%2d=%08X", i, reg)
 		if i == 3 || i == 9 {
 			output += "\n\t"
-		} else if i != 15 {
+		} else if i != 14 {
 			output += "\t"
 		}
 	}

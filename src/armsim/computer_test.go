@@ -146,6 +146,7 @@ func TestStep(t *testing.T) {
 	}
 }
 
+/*
 func TestTrace(t *testing.T) {
 	// Setup
 	c := NewComputer(32*1024, os.Stderr)
@@ -180,6 +181,7 @@ func TestTrace(t *testing.T) {
 		}
 	}
 }
+*/
 
 func TestLoadELF(t *testing.T) {
 	var c *Computer

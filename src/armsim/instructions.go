@@ -94,7 +94,7 @@ func (bi *baseInstruction) BuildFromBase() (instruction Instruction) {
 	case 0x5:
 		bi.log.Printf("Branch")
 		instruction = new(branchInstruction)
-	case 0xF:
+	case 0x7:
 		bi.log.Printf("Software Interrupt")
 		instruction = new(unimplementedInstruction)
 	default:
