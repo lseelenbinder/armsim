@@ -179,11 +179,11 @@ func (c *Computer) Trace() (output string) {
 	cpsr, _ := c.registers.ReadWord(CPSR)
 	flags := ExtractBits(cpsr, N, F) >> F
 
-	output = fmt.Sprintf("%06d %08x %08x %04d\t", c.step_counter, program_counter,
+	output = fmt.Sprintf("%06d %08X %08X %04d\t", c.step_counter, program_counter,
 		c.ram.Checksum(), flags)
 	for i := 0; i < 16; i++ {
 		reg, _ := c.registers.ReadWord(uint32(i))
-		output += fmt.Sprintf("%2d=%08x", i, reg)
+		output += fmt.Sprintf("%2d=%08X", i, reg)
 		if i == 3 || i == 9 {
 			output += "\n\t"
 		} else if i != 15 {

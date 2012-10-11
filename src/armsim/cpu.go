@@ -70,7 +70,7 @@ type CPU struct {
 	registers *Memory
 
 	// Logging class
-	log *log.Logger
+	log    *log.Logger
 	logOut io.Writer
 }
 
@@ -144,5 +144,44 @@ func (cpu *CPU) Decode(instructionBits uint32) (instruction Instruction) {
 // Executes an instruction. (Currently pauses execution 0.25 seconds.)
 func (cpu *CPU) Execute(i Instruction) {
 	cpu.log.Println("Executing...")
-	i.Execute(cpu.ram, cpu.registers)
+	i.Execute(cpu)
+}
+
+// Fetches a register's value. This function accounts for the fact PC should be R[PC] + 8
+//
+// Parameters:
+//  r - register (equal to one of the constants defined above)
+//
+// Returns:
+//  value - the register's content
+func (cpu *CPU) FetchRegister(r uint32) (value uint32, err error) {
+	value, err = cpu.registers.ReadWord(r)
+	if r == PC {
+		value += 8
+	}
+	return
+}
+
+// Wraps FetchRegister to allow a register index value obtained from an instruction.
+// Parameters and return value are the same as FetchRegister.
+func (cpu *CPU) FetchRegisterFromInstruction(r uint32) (value uint32, err error) {
+	return cpu.FetchRegister(r << 2)
+}
+
+// Writes a register's value.
+//
+// Parameters:
+//  r - register (equal to one of the constants defined above)
+//  data - a word of data to write to a register
+//
+// Returns:
+//  err - any error that may have occured
+func (cpu *CPU) WriteRegister(r, data uint32) (err error) {
+	return cpu.registers.WriteWord(r, data)
+}
+
+// Wraps WriteRegister to allow it to use register index value obtained from an instruction.
+// Parameters and return value are the same as WriteRegister.
+func (cpu *CPU) WriteRegisterFromInstruction(r, data uint32) (err error) {
+	return cpu.WriteRegister(r<<2, data)
 }

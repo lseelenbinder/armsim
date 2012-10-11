@@ -231,9 +231,18 @@ func ExtractBits(word uint32, startBit uint32, endBit uint32) uint32 {
 		}
 	}
 
-	log.SetPrefix("Extract bits: ")
-	log.Printf("word: %#x mask: %#x", word, mask)
 	return word & mask
+}
+
+// Extracts and Shifts bits from a word.
+// Parameters:
+//  word - a word of data
+//  startBit - the least-significant bit to extract from
+//  endBit - the most-significant bit to extract up to
+//
+// Returns: a new word containing the extracted bits and right-shifted startBit times.
+func ExtractShiftBits(word, startBit, endBit uint32) uint32 {
+	return ExtractBits(word, startBit, endBit) >> startBit
 }
 
 // Helpers

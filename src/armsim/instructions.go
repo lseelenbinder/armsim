@@ -5,13 +5,13 @@
 package armsim
 
 import (
-	"log"
 	"io"
+	"log"
 )
 
 // Implements a Go interface allowing polymorphism, Go style.
 type Instruction interface {
-	Execute(ram *Memory, registers *Memory) error
+	Execute(cpu *CPU) error
 	decode(base *baseInstruction) error
 }
 
@@ -30,22 +30,23 @@ func Decode(instructionBits uint32, logOut io.Writer) (instruction Instruction) 
 
 	// Set instruction bits
 	base.InstructionBits = instructionBits
+	base.shifter = new(BarrelShifter)
 
 	// Get condition
-	base.CondCode = ExtractBits(instructionBits, 28, 32) >> 28
+	base.CondCode = ExtractShiftBits(instructionBits, 28, 32)
 	base.log.Printf("Condition bits: %04b", base.CondCode)
 
 	// Get instruction type
-	base.Type = ExtractBits(instructionBits, 25, 28) >> 25
+	base.Type = ExtractShiftBits(instructionBits, 25, 28)
 	base.log.Printf("Type bits: %03b", base.Type)
 
 	// Get Rn
-	base.Rn = ExtractBits(instructionBits, 16, 20) >> 16
-	base.log.Printf("Rn bits: %04b", base.Rn)
+	base.Rn = ExtractShiftBits(instructionBits, 16, 20)
+	base.log.Printf("Rn: %d", base.Rn)
 
 	// Get Rd
-	base.Rd = ExtractBits(instructionBits, 12, 16) >> 12
-	base.log.Printf("Rd bits: %04b", base.Rd)
+	base.Rd = ExtractShiftBits(instructionBits, 12, 16)
+	base.log.Printf("Rd: %d", base.Rd)
 
 	instruction = base.BuildFromBase()
 
@@ -65,34 +66,35 @@ type baseInstruction struct {
 	// First register operand
 	Rn uint32
 
-	log *log.Logger
+	log     *log.Logger
+	shifter *BarrelShifter
 }
 
 func (bi *baseInstruction) BuildFromBase() (instruction Instruction) {
 	// Check edge cases
 
 	// Check type of instruction and call proper decode method
-	switch (bi.Type) {
+	switch bi.Type {
 	case 0x0, 0x1:
-		log.Printf("Data Processing Instruction")
+		bi.log.Printf("Data Processing Instruction")
 		instruction = new(dataInstruction)
 	case 0x2:
-		log.Printf("Load/Store: Immediate Offset")
+		bi.log.Printf("Load/Store: Immediate Offset")
 		instruction = new(loadStoreInstruction)
 	case 0x3:
-		log.Printf("Load/Store: Register Offset")
+		bi.log.Printf("Load/Store: Register Offset")
 		instruction = new(unimplementedInstruction)
 	case 0x4:
-		log.Printf("Load/Store: Multiple")
+		bi.log.Printf("Load/Store: Multiple")
 		instruction = new(unimplementedInstruction)
 	case 0x5:
-		log.Printf("Branch")
+		bi.log.Printf("Branch")
 		instruction = new(branchInstruction)
 	case 0xF:
-		log.Printf("Software Interrupt")
+		bi.log.Printf("Software Interrupt")
 		instruction = new(unimplementedInstruction)
 	default:
-		log.Printf("Unknown Instruction")
+		bi.log.Printf("Unknown Instruction")
 		instruction = new(unimplementedInstruction)
 	}
 
@@ -110,9 +112,15 @@ type dataInstruction struct {
 	Opcode byte
 	// S bit
 	S bool
+	// I bit
+	I bool
 	// Second operand
 	Operand2 uint32
 }
+
+const (
+	MOV byte = 0xD // 1101
+)
 
 // Executes a data instruction
 //
@@ -122,15 +130,14 @@ type dataInstruction struct {
 //
 // Returns:
 //  err - an error
-func (di *dataInstruction) Execute(ram *Memory, registers *Memory) (err error) {
-	di.log.SetPrefix("Instruction Executing: ")
-	// Eventually this will contain logic to differentiate between dataInstruction
-	// types
-	// switch (opcode)
-	//  case (. . .)
-
-	// Assume MOV immediate
-	registers.WriteWord(di.Rd << 2, di.Operand2)
+func (di *dataInstruction) Execute(cpu *CPU) (err error) {
+	di.log.SetPrefix("Data Instruction (Execute): ")
+	// Assertain specific instruction
+	switch di.Opcode {
+	case MOV:
+		di.shifter = NewFromOperand2(di.Operand2, di.I, cpu)
+		cpu.WriteRegisterFromInstruction(di.Rd, di.shifter.Shift())
+	}
 	return
 }
 
@@ -143,17 +150,23 @@ func (di *dataInstruction) Execute(ram *Memory, registers *Memory) (err error) {
 //  err - an error
 func (di *dataInstruction) decode(base *baseInstruction) (err error) {
 	di.baseInstruction = base
+	di.log.SetPrefix("Data Instruction (Decode): ")
+
+	// Get I bit
+	di.I = ExtractShiftBits(di.InstructionBits, 25, 26) == 1
+	di.log.Printf("I bit: %01t", di.I)
+
 	// Get opcode
-	di.Opcode = byte(ExtractBits(di.InstructionBits, 21, 25) >> 21)
+	di.Opcode = byte(ExtractShiftBits(di.InstructionBits, 21, 25))
 	di.log.Printf("Opcode bits: %04b", di.Opcode)
 
 	// Get Operand2
-	di.Operand2 = ExtractBits(di.InstructionBits, 0, 12)
+	di.Operand2 = ExtractShiftBits(di.InstructionBits, 0, 12)
 	di.log.Printf("Op2 bits: %012b", di.Operand2)
 
 	// Get S bit
-	di.S = (ExtractBits(di.InstructionBits, 20, 21) >> 20) == 1
-	di.log.Printf("S bit: %01b", di.S)
+	di.S = ExtractShiftBits(di.InstructionBits, 20, 21) == 1
+	di.log.Printf("S bit: %01t", di.S)
 
 	return
 }
@@ -182,7 +195,7 @@ type loadStoreInstruction struct {
 //
 // Returns:
 //  err - an error
-func (lsi *loadStoreInstruction) Execute(ram *Memory, registers *Memory) (err error) {
+func (lsi *loadStoreInstruction) Execute(cpu *CPU) (err error) {
 	// Stub
 	return
 }
@@ -218,7 +231,7 @@ type branchInstruction struct {
 //
 // Returns:
 //  err - an error
-func (bi *branchInstruction) Execute(ram *Memory, registers *Memory) (err error) {
+func (bi *branchInstruction) Execute(cpu *CPU) (err error) {
 	// Stub
 	return
 }
@@ -239,7 +252,7 @@ type unimplementedInstruction struct {
 }
 
 // Stub method to fake execution of unimplemented instructions
-func (ui *unimplementedInstruction) Execute(ram *Memory, registers *Memory) (err error) {
+func (ui *unimplementedInstruction) Execute(cpu *CPU) (err error) {
 	return
 }
 
