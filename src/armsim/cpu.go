@@ -142,9 +142,9 @@ func (cpu *CPU) Decode(instructionBits uint32) (instruction Instruction) {
 }
 
 // Executes an instruction. (Currently pauses execution 0.25 seconds.)
-func (cpu *CPU) Execute(i Instruction) {
+func (cpu *CPU) Execute(i Instruction) (status bool) {
 	cpu.log.Println("Executing...")
-	i.Execute(cpu)
+	return i.Execute()
 }
 
 // Fetches a register's value. This function accounts for the fact PC should be R[PC] + 8

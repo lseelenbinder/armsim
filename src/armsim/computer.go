@@ -42,7 +42,7 @@ type Computer struct {
 // status information to external code.
 type ComputerStatus struct {
 	Flags       [4]bool    // CPSR Flags
-	Disassembly	 []string   // The 2 previous instructions, current instruction, and next 7 instructions 
+	Disassembly []string   // The 2 previous instructions, current instruction, and next 7 instructions
 	Registers   [16]uint32 // A representation of the registers
 	Memory      []string   // A string representation of the RAM
 	Steps       uint64     // The number of steps executed so far (step_counter)
@@ -134,7 +134,7 @@ func (c *Computer) Status() (status ComputerStatus) {
 
 	status.Disassembly = make([]string, 8)
 	var i uint32
-	for pc := status.Registers[15] - 8; pc < status.Registers[15] + 4 * 6; pc+=4 {
+	for pc := status.Registers[15] - 8; pc < status.Registers[15]+4*6; pc += 4 {
 		iBits, _ := c.ram.ReadWord(pc)
 		instruction := Decode(c.cpu, iBits)
 		status.Disassembly[i] = fmt.Sprintf("%x||%s", iBits, instruction.Disassemble())
@@ -156,7 +156,7 @@ func (c *Computer) Status() (status ComputerStatus) {
 // Performs a single execution cycle. Take no parameters and returns a boolean
 // signifying if the cycle was completed (a cycle will not complete if the
 // instrution fetched is 0x0).
-func (c *Computer) Step() bool {
+func (c *Computer) Step() (status bool) {
 	instructionBits := c.cpu.Fetch()
 
 	// Don't continue if the instruction is useless
@@ -165,13 +165,17 @@ func (c *Computer) Step() bool {
 	}
 
 	instruction := c.cpu.Decode(instructionBits)
-	c.cpu.Execute(instruction)
+	status = c.cpu.Execute(instruction)
 
 	if c.traceFile != nil {
 		c.traceFile.WriteString(c.Trace() + "\n")
 	}
 	// Increment step counter
 	c.step_counter++
+	if !status {
+		return false
+	}
+
 	return true
 }
 

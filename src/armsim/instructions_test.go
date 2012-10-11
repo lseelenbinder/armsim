@@ -267,6 +267,21 @@ func TestMUL(t *testing.T) {
 	}
 }
 
+func TestSWI(t *testing.T) {
+	c := NewComputer(32, nil)
+	c.registers.WriteWord(PC, 0x4)
+	c.registers.WriteWord(r4, 0x10) // Rs
+	c.registers.WriteWord(r3, 0x30) // Rm
+	c.ram.WriteWord(0x4, 0xE0020394)
+	c.ram.WriteWord(0x8, 0xEF000000)
+	c.ram.WriteWord(0xc, 0xE0020394)
+	c.ram.WriteWord(0x10, 0xE0020394)
+	c.Run(nil, nil)
+	if pc, _ := c.registers.ReadWord(PC); pc != 0xc {
+		t.Fatalf("expected execution to halt after SWI, it did not (PC: %#x)", pc)
+	}
+}
+
 func TestDisassemble(t *testing.T) {
 
 }

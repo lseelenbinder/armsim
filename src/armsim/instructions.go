@@ -11,9 +11,9 @@ import (
 
 // Implements a Go interface allowing polymorphism, Go style.
 type Instruction interface {
-	Execute(cpu *CPU) error
+	Execute() (status bool)
 	Disassemble() string
-	decode(base *baseInstruction) error
+	decode(base *baseInstruction)
 }
 
 type baseInstruction struct {
@@ -97,7 +97,7 @@ func (bi *baseInstruction) BuildFromBase() (instruction Instruction) {
 		instruction = new(branchInstruction)
 	case 0x7:
 		bi.log.Printf("Software Interrupt")
-		instruction = new(unimplementedInstruction)
+		instruction = new(swiInstruction)
 	default:
 		bi.log.Printf("Unknown Instruction")
 		instruction = new(unimplementedInstruction)
@@ -141,9 +141,8 @@ const (
 // Parameters:
 //  base - a generic instruction containing most information
 //
-// Returns:
-//  err - an error
-func (di *dataInstruction) decode(base *baseInstruction) (err error) {
+// Returns: None
+func (di *dataInstruction) decode(base *baseInstruction) {
 	di.baseInstruction = base
 	di.log.SetPrefix("Data Instruction (Decode): ")
 
@@ -184,11 +183,11 @@ func (di *dataInstruction) decode(base *baseInstruction) (err error) {
 //
 // Returns:
 //  err - an error
-func (di *dataInstruction) Execute(cpu *CPU) (err error) {
+func (di *dataInstruction) Execute() (status bool) {
 	di.log.SetPrefix("Data Instruction (Execute): ")
 
 	result := di.shifter.Shift()
-	rn, _ := cpu.FetchRegisterFromInstruction(di.Rn)
+	rn, _ := di.cpu.FetchRegisterFromInstruction(di.Rn)
 
 	// Assertain specific instruction
 
@@ -198,37 +197,37 @@ func (di *dataInstruction) Execute(cpu *CPU) (err error) {
 		if di.Opcode == MNV {
 			result ^= 0xFFFFFFFF
 		}
-		cpu.WriteRegisterFromInstruction(di.Rd, result)
+		di.cpu.WriteRegisterFromInstruction(di.Rd, result)
 	case ADD:
 		// Rd = Rn + shifter_operand
-		cpu.WriteRegisterFromInstruction(di.Rd, rn+result)
+		di.cpu.WriteRegisterFromInstruction(di.Rd, rn+result)
 	case SUB:
 		// Rd = Rn - shifter_operand
-		cpu.WriteRegisterFromInstruction(di.Rd, rn-result)
+		di.cpu.WriteRegisterFromInstruction(di.Rd, rn-result)
 	case RSB:
 		// Rd = shifter_operand - Rn
-		cpu.WriteRegisterFromInstruction(di.Rd, result-rn)
+		di.cpu.WriteRegisterFromInstruction(di.Rd, result-rn)
 	case AND:
 		// Rd = Rn AND shifter_operand
-		cpu.WriteRegisterFromInstruction(di.Rd, rn&result)
+		di.cpu.WriteRegisterFromInstruction(di.Rd, rn&result)
 	case EOR:
 		// Rd = Rn XOR shifter_operand
-		cpu.WriteRegisterFromInstruction(di.Rd, rn^result)
+		di.cpu.WriteRegisterFromInstruction(di.Rd, rn^result)
 	case ORR:
 		// Rd = Rn OR shifter_operand
-		cpu.WriteRegisterFromInstruction(di.Rd, rn|result)
+		di.cpu.WriteRegisterFromInstruction(di.Rd, rn|result)
 	case BIC:
 		// Rd = Rn AND NOT shifter_operand
-		cpu.WriteRegisterFromInstruction(di.Rd, rn&^result)
+		di.cpu.WriteRegisterFromInstruction(di.Rd, rn&^result)
 	case MUL:
 		// Rd = Rm * Rs
 		// This instruction is highly irregular, so the actual calculation is:
 		// Rn = Rm * Rs
-		cpu.WriteRegisterFromInstruction(di.Rn, di.shifter.GetRm()*di.shifter.GetRs())
+		di.cpu.WriteRegisterFromInstruction(di.Rn, di.shifter.GetRm()*di.shifter.GetRs())
 	default:
 		di.log.Printf("Unknown. Opcode: %04b", di.Opcode)
 	}
-	return
+	return true
 }
 
 func (di *dataInstruction) Disassemble() (assembly string) {
@@ -287,13 +286,12 @@ type loadStoreInstruction struct {
 
 // Executes a load/store instruction
 //
-// Parameters:
-//  ram - a pointer to a block of memory, presumably ram
-//  registers - a pointer to a block of memory, presumably a register bank
+// Parameters: None
 //
 // Returns:
-//  err - an error
-func (lsi *loadStoreInstruction) Execute(cpu *CPU) (err error) {
+//  status - a boolean that determines in the CPU statuss after this
+//  instruction
+func (lsi *loadStoreInstruction) Execute() (status bool) {
 	// Stub
 	return
 }
@@ -303,9 +301,8 @@ func (lsi *loadStoreInstruction) Execute(cpu *CPU) (err error) {
 // Parameters:
 //  base - a generic instruction containing most information
 //
-// Returns:
-//  err - an error
-func (lsi *loadStoreInstruction) decode(base *baseInstruction) (err error) {
+// Returns: None
+func (lsi *loadStoreInstruction) decode(base *baseInstruction) {
 	// Stub
 	return
 }
@@ -331,7 +328,7 @@ type branchInstruction struct {
 //
 // Returns:
 //  err - an error
-func (bi *branchInstruction) Execute(cpu *CPU) (err error) {
+func (bi *branchInstruction) Execute() (status bool) {
 	// Stub
 	return
 }
@@ -341,25 +338,48 @@ func (bi *branchInstruction) Execute(cpu *CPU) (err error) {
 // Parameters:
 //  base - a generic instruction containing most information
 //
-// Returns:
-//  err - an error
-func (bi *branchInstruction) decode(base *baseInstruction) (err error) {
+// Returns: None
+func (bi *branchInstruction) decode(base *baseInstruction) {
 	// Stub
 	return
 }
 
 func (bi *branchInstruction) Disassemble() (assembly string) { return }
 
+type swiInstruction struct {
+	Data uint32
+}
+
+func (swi *swiInstruction) decode(base *baseInstruction) {
+	// I don't even really need this data, but the OS might.
+	swi.Data = ExtractBits(base.InstructionBits, 0, 25)
+	return
+}
+
+// Executes a software interrupt instruction
+//
+// Parameters: None
+//
+// Returns:
+//  status - a boolean that determines in the CPU statuss after this
+//  instruction
+func (si *swiInstruction) Execute() (status bool) {
+	// All SWI instructions immediately stop execution at this point
+	return false
+}
+
+func (swi *swiInstruction) Disassemble() (assembly string) { return }
+
 type unimplementedInstruction struct {
 }
 
 // Stub method to fake execution of unimplemented instructions
-func (ui *unimplementedInstruction) Execute(cpu *CPU) (err error) {
+func (ui *unimplementedInstruction) Execute() (status bool) {
 	return
 }
 
 // Stub method to fake decoding of unimplemented instructions
-func (ui *unimplementedInstruction) decode(base *baseInstruction) (err error) {
+func (ui *unimplementedInstruction) decode(base *baseInstruction) {
 	return
 }
 
