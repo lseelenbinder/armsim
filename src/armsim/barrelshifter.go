@@ -16,12 +16,12 @@ const (
 )
 
 type BarrelShifter struct {
-	Type        uint32
-	ShiftAmount uint32
-	Data        uint32
-	Rs          uint32
-	Rn          uint32
-	i           bool
+	Type        uint32 // Type of Shift
+	ShiftAmount uint32 // How much to shift
+	Data        uint32 // Value to shift
+	Rs          uint32 // Register to shift by
+	Rn          uint32 // Register to shift
+	i           bool   // Immediate (yes or no)
 	log         *log.Logger
 }
 
@@ -65,10 +65,12 @@ func (b *BarrelShifter) Shift() (result uint32) {
 	return
 }
 
+// Returns value of the Rs register
 func (b *BarrelShifter) GetRs() (rs uint32) {
 	return b.ShiftAmount
 }
 
+// Returns value of the Rm register
 func (b *BarrelShifter) GetRm() (rm uint32) {
 	return b.Data
 }
@@ -96,7 +98,11 @@ func (b *BarrelShifter) Disassemble() (operands string) {
 			data = fmt.Sprintf("#%d", b.ShiftAmount)
 		}
 	}
-	operands = fmt.Sprintf("r%d, %s %s", b.Rn, mnemonic, data)
+	if mnemonic == "lsl" && data == "#0" {
+		operands = fmt.Sprintf("r%d", b.Rn)
+	} else {
+		operands = fmt.Sprintf("r%d, %s %s", b.Rn, mnemonic, data)
+	}
 	b.log.Println(operands)
 	return
 }

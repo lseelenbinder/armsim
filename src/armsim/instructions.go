@@ -88,7 +88,7 @@ func (bi *baseInstruction) BuildFromBase() (instruction Instruction) {
 		instruction = new(loadStoreInstruction)
 	case 0x3:
 		bi.log.Printf("Load/Store: Register Offset")
-		instruction = new(unimplementedInstruction)
+		instruction = new(loadStoreInstruction)
 	case 0x4:
 		bi.log.Printf("Load/Store: Multiple")
 		instruction = new(unimplementedInstruction)
@@ -272,28 +272,22 @@ type loadStoreInstruction struct {
 	// Embedding a general instruction
 	*baseInstruction
 
-	// B bit
-	B bool
-	// L bit
-	L bool
+	// I bit
+	I bool
 	// P bit
 	P bool
 	// U bit
 	U bool
+	// B bit
+	B bool
 	// W bit
 	W bool
-}
+	// L bit
+	L bool
 
-// Executes a load/store instruction
-//
-// Parameters: None
-//
-// Returns:
-//  status - a boolean that determines in the CPU statuss after this
-//  instruction
-func (lsi *loadStoreInstruction) Execute() (status bool) {
-	// Stub
-	return true
+	// Offset
+	offset12 uint32
+	shifter  *BarrelShifter
 }
 
 // Decodes a load/store instruction
@@ -303,11 +297,159 @@ func (lsi *loadStoreInstruction) Execute() (status bool) {
 //
 // Returns: None
 func (lsi *loadStoreInstruction) decode(base *baseInstruction) {
-	// Stub
+	lsi.baseInstruction = base
+	lsi.log.SetPrefix("Load/Store Decoder: ")
+	// I bit
+	lsi.I = ExtractShiftBits(base.InstructionBits, 25, 26) == 1
+	lsi.log.Printf("I bit: %t", lsi.I)
+	// P bit
+	lsi.P = ExtractShiftBits(base.InstructionBits, 24, 25) == 1
+	lsi.log.Printf("P bit: %t", lsi.P)
+	// U bit
+	lsi.U = ExtractShiftBits(base.InstructionBits, 23, 24) == 1
+	lsi.log.Printf("U bit: %t", lsi.U)
+	// B bit
+	lsi.B = ExtractShiftBits(base.InstructionBits, 22, 23) == 1
+	lsi.log.Printf("B bit: %t", lsi.B)
+	// W bit
+	lsi.W = ExtractShiftBits(base.InstructionBits, 21, 22) == 1
+	lsi.log.Printf("W bit: %t", lsi.W)
+	// L bit
+	lsi.L = ExtractShiftBits(base.InstructionBits, 20, 21) == 1
+	lsi.log.Printf("L bit: %t", lsi.L)
+
+	// Offset
+	op2 := ExtractShiftBits(base.InstructionBits, 0, 12)
+	lsi.log.Printf("op2 bits: %#012b", op2)
+
+	if !lsi.I {
+		// Immediate
+		lsi.offset12 = op2
+		lsi.log.Printf("Immediate offset: %#012b", op2)
+	} else {
+		// I can take advantage of the BarrelShifter's logic
+		lsi.shifter = NewFromOperand2(op2, false, lsi.cpu)
+		lsi.log.Printf("Scaled offset: %#012b", lsi.shifter.Shift())
+	}
+
 	return
 }
 
-func (lsi *loadStoreInstruction) Disassemble() (assembly string) { return }
+// Executes a load/store instruction
+//
+// Parameters: None
+//
+// Returns:
+//  status - a boolean that determines if the CPU continues after this
+//  instruction
+func (lsi *loadStoreInstruction) Execute() (status bool) {
+	var address, base, offset, data uint32
+	var data8 byte
+
+	// Get base and offset
+	base, _ = lsi.cpu.FetchRegisterFromInstruction(lsi.Rn)
+	if !lsi.I {
+		offset = lsi.offset12
+	} else {
+		offset = lsi.shifter.Shift()
+	}
+
+	// Pre-Index
+	if lsi.P {
+		address = lsi.calculateAddress(base, offset)
+		lsi.log.Printf("Pre-Address: %#x", address)
+	}
+
+	// Load or Store
+	if lsi.L {
+		// Load
+		if lsi.B {
+			// Byte
+			data8, _ = lsi.cpu.ram.ReadByte(address)
+			data = uint32(data8)
+		} else {
+			// Word
+			data, _ = lsi.cpu.ram.ReadWord(address)
+		}
+
+		// Write to register
+		lsi.cpu.WriteRegisterFromInstruction(lsi.Rd, data)
+	} else {
+		// Store
+		data, _ = lsi.cpu.FetchRegisterFromInstruction(lsi.Rd)
+
+		if lsi.B {
+			// Byte
+			data8 = byte(data)
+			// Write to memory
+			lsi.cpu.ram.WriteByte(address, data8)
+		} else {
+			// Write to memory
+			lsi.cpu.ram.WriteWord(address, data)
+		}
+	}
+
+	// Post-Index
+	if !lsi.P {
+		address = lsi.calculateAddress(base, offset)
+		lsi.log.Printf("Post-Address: %#x", address)
+	}
+
+	// Writeback
+	if lsi.W {
+		lsi.cpu.WriteRegisterFromInstruction(lsi.Rn, address)
+		lsi.log.Printf("Write-back: %#d = %#x", lsi.Rn, address)
+	}
+
+	return true
+}
+
+func (lsi *loadStoreInstruction) Disassemble() (assembly string) {
+	var mnemonic, arguments, writeback, shift string
+
+	if lsi.L {
+		mnemonic += "ldr"
+	} else {
+		mnemonic += "str"
+	}
+
+	if lsi.B {
+		mnemonic += "b"
+	}
+
+	if !lsi.I {
+		shift = fmt.Sprintf("#%d", lsi.offset12)
+	} else {
+		shift = lsi.shifter.Disassemble()
+	}
+
+	arguments = fmt.Sprintf("r%d", lsi.Rn)
+	if shift != "#0" {
+		arguments += ", "
+		if !lsi.U {
+			arguments += "-"
+		}
+		arguments += fmt.Sprintf("%s", shift)
+	}
+
+	if lsi.W {
+		writeback = "!"
+	}
+
+	return fmt.Sprintf("%s r%d, [%s] %s", mnemonic, lsi.Rd, arguments, writeback)
+}
+
+// Calulates an effective address based on a base address, an offset, and the U
+// bit
+func (lsi *loadStoreInstruction) calculateAddress(base, offset uint32) (address uint32) {
+	if lsi.U {
+		address = base + offset
+	} else {
+		address = base - offset
+	}
+
+	return
+}
 
 type branchInstruction struct {
 	// Embedding a general instruction
@@ -370,7 +512,7 @@ func (si *swiInstruction) Execute() (status bool) {
 
 func (swi *swiInstruction) Disassemble() (assembly string) { return }
 
-type unimplementedInstruction struct {}
+type unimplementedInstruction struct{}
 
 // Stub method to fake execution of unimplemented instructions
 func (ui *unimplementedInstruction) Execute() (status bool) {
