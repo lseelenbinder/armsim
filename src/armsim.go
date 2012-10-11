@@ -16,7 +16,7 @@ type Options struct {
 	memorySize uint
 	tracing    bool
 	gui        bool
-	logFile		 string
+	logFile    string
 }
 
 func main() {
@@ -72,7 +72,6 @@ func main() {
 			fmt.Println("Loaded valid ELF file - checksum is", c.Checksum())
 		}
 	}
-
 
 	if options.gui {
 		log.Println("Loading webserver...")

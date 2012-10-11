@@ -267,6 +267,6 @@ func TestMUL(t *testing.T) {
 	}
 }
 
-func TestDisassembly(t *testing.T) {
+func TestDisassemble(t *testing.T) {
 
 }

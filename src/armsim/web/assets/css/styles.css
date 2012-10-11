@@ -17,6 +17,7 @@ html {
 }
 .instruction.alert {
 	margin: 0px;
+	padding-left: 4px;
 }
 .instruction .encoded {
 	margin-right: 30px;

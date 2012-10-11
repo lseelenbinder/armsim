@@ -73,7 +73,7 @@ func (b *BarrelShifter) GetRm() (rm uint32) {
 	return b.Data
 }
 
-func (b *BarrelShifter) Disassembly() (operands string) {
+func (b *BarrelShifter) Disassemble() (operands string) {
 	var mnemonic, data string
 	if b.i {
 		return fmt.Sprintf("#%d", b.Shift())

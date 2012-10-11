@@ -51,28 +51,28 @@ func TestOperand2(t *testing.T) {
 
 }
 
-func TestBDisassembly(t *testing.T) {
+func TestBDisassemble(t *testing.T) {
 	c := NewComputer(32*1024, os.Stderr)
 
 	// Test immediate
 	b := NewFromOperand2(0xfb5, true, c.cpu)
-	if a := b.Disassembly(); a != "#724" {
+	if a := b.Disassemble(); a != "#724" {
 		t.Fatal("Expected '#724', got", a)
 	}
 
 	b = NewFromOperand2(0x4a1, true, c.cpu)
-	if a := b.Disassembly(); a != "#2701131776" {
+	if a := b.Disassemble(); a != "#2701131776" {
 		t.Fatal("Expected '#2701131776', got", a)
 	}
 
 	// Test immediate shift
 	b = NewFromOperand2(0x141, false, c.cpu)
-	if a := b.Disassembly(); a != "r1, asr #2" {
+	if a := b.Disassemble(); a != "r1, asr #2" {
 		t.Fatal("Expected 'asr #2', got", a)
 	}
 
 	b = NewFromOperand2(0x121, false, c.cpu)
-	if a := b.Disassembly(); a != "r1, lsr #2" {
+	if a := b.Disassemble(); a != "r1, lsr #2" {
 		t.Fatal("Expected 'lsr #2', got", a)
 	}
 

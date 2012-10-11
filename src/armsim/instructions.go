@@ -12,7 +12,7 @@ import (
 // Implements a Go interface allowing polymorphism, Go style.
 type Instruction interface {
 	Execute(cpu *CPU) error
-	Disassembly() string
+	Disassemble() string
 	decode(base *baseInstruction) error
 }
 
@@ -171,7 +171,7 @@ func (di *dataInstruction) decode(base *baseInstruction) (err error) {
 		di.Opcode = MUL
 	}
 
-	di.log.Printf("Decoded: %s", di.Disassembly())
+	di.log.Printf("Decoded: %s", di.Disassemble())
 
 	return
 }
@@ -231,7 +231,7 @@ func (di *dataInstruction) Execute(cpu *CPU) (err error) {
 	return
 }
 
-func (di *dataInstruction) Disassembly() (assembly string) {
+func (di *dataInstruction) Disassemble() (assembly string) {
 	// Get the Opcode
 	switch di.Opcode {
 	case MOV:
@@ -255,7 +255,7 @@ func (di *dataInstruction) Disassembly() (assembly string) {
 	case MUL:
 		assembly += "mul"
 	default:
-		assembly += "unknown"
+		assembly += "unk"
 	}
 
 	if di.Opcode == MUL {
@@ -263,7 +263,7 @@ func (di *dataInstruction) Disassembly() (assembly string) {
 		assembly += fmt.Sprintf(" r%d, r%d, r%d", di.Rn, di.shifter.Rn, di.shifter.Rs)
 	} else {
 		assembly += fmt.Sprintf(" r%d, ", di.Rd)
-		assembly += di.shifter.Disassembly()
+		assembly += di.shifter.Disassemble()
 	}
 
 	return
@@ -310,7 +310,7 @@ func (lsi *loadStoreInstruction) decode(base *baseInstruction) (err error) {
 	return
 }
 
-func (lsi *loadStoreInstruction) Disassembly() (assembly string) { return }
+func (lsi *loadStoreInstruction) Disassemble() (assembly string) { return }
 
 type branchInstruction struct {
 	// Embedding a general instruction
@@ -348,7 +348,7 @@ func (bi *branchInstruction) decode(base *baseInstruction) (err error) {
 	return
 }
 
-func (bi *branchInstruction) Disassembly() (assembly string) { return }
+func (bi *branchInstruction) Disassemble() (assembly string) { return }
 
 type unimplementedInstruction struct {
 }
@@ -363,4 +363,4 @@ func (ui *unimplementedInstruction) decode(base *baseInstruction) (err error) {
 	return
 }
 
-func (ui *unimplementedInstruction) Disassembly() (assembly string) { return }
+func (ui *unimplementedInstruction) Disassemble() (assembly string) { return }

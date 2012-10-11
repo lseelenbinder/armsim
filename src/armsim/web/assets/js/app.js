@@ -147,6 +147,7 @@ function update(data) {
   data = JSON.parse(data.Content);
 
   updateFlags(data.Flags);
+  updateDisassembly(data.Disassembly, data.Registers[15]);
   updateRegisters(data.Registers);
   updateMemory(data.Memory);
   updateChecksum(data.Checksum);
@@ -172,6 +173,29 @@ function updateRegisters(registers) {
   $("#registers tbody").empty();
   $.each(registers, function (i) {
     $("#registers tbody").append("<tr><td>r" + i + "</td><td>" + hexToString(registers[i]) + "</td></tr");
+  });
+}
+
+function updateDisassembly(instructions, pc) {
+  $("#instructions").empty();
+  var address = pc - 8;
+  $.each(instructions, function (i) {
+    var encoded = parseInt(instructions[i].split("||")[0], 16);
+    var decoded = instructions[i].split("||")[1].split(" ")[0] + "\t";
+    var arguments = instructions[i].split("||")[1].split(" ").slice(1).join(" ");
+    var comments = "";  
+    if (address == pc) {
+      var active = "alert alert-success"
+    } else {
+      var active = "";
+    }
+    $("#instructions").append(
+      "<div class='instruction " + active + "'><span class='address'>" + hexToString(address) + 
+      "</span><span class='encoded'>" + hexToString(encoded) + 
+      "</span><span class='decoded'>" + decoded + 
+      "<span class='arguments'>" + arguments + 
+      "</span></span><span class='comment'>" + comments + "</span></div>");
+    address += 4
   });
 }
 

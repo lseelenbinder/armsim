@@ -41,11 +41,12 @@ type Computer struct {
 // A ComputerStatus is an individual module designed to make it easy to pass
 // status information to external code.
 type ComputerStatus struct {
-	Flags     [4]bool    // CPSR Flags
-	Registers [16]uint32 // A representation of the registers
-	Memory    []string   // A string representation of the RAM
-	Steps     uint64     // The number of steps executed so far (step_counter)
-	Checksum  int32      // Current RAM Checksum
+	Flags       [4]bool    // CPSR Flags
+	Disassembly	 []string   // The 2 previous instructions, current instruction, and next 7 instructions 
+	Registers   [16]uint32 // A representation of the registers
+	Memory      []string   // A string representation of the RAM
+	Steps       uint64     // The number of steps executed so far (step_counter)
+	Checksum    int32      // Current RAM Checksum
 }
 
 // Initializes a Computer
@@ -119,7 +120,7 @@ func (c *Computer) Run(halting, finishing chan bool) {
 // Parameters: None
 //
 // Returns:
-//  status - a ComputerStatus module fully intialized
+//  status - a ComputerStatus module fully initialized
 func (c *Computer) Status() (status ComputerStatus) {
 	status.Flags[0], _ = c.registers.TestFlag(CPSR, N) // Negative Flag
 	status.Flags[1], _ = c.registers.TestFlag(CPSR, Z) // Zero Flag
@@ -128,10 +129,18 @@ func (c *Computer) Status() (status ComputerStatus) {
 	c.log.Println("Flags:", status.Flags)
 
 	for i := 0; i < 16; i++ {
-		status.Registers[i], _ = c.registers.ReadWord(uint32(i * 4))
+		status.Registers[i], _ = c.registers.ReadWord(uint32(i << 2))
 	}
 
+	status.Disassembly = make([]string, 8)
 	var i uint32
+	for pc := status.Registers[15] - 8; pc < status.Registers[15] + 4 * 6; pc+=4 {
+		iBits, _ := c.ram.ReadWord(pc)
+		instruction := Decode(c.cpu, iBits)
+		status.Disassembly[i] = fmt.Sprintf("%x||%s", iBits, instruction.Disassemble())
+		i++
+	}
+
 	status.Memory = make([]string, c.memSize)
 	for ; i < c.memSize; i++ {
 		b, _ := c.ram.ReadByte(i)
