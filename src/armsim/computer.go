@@ -342,9 +342,6 @@ func (c *Computer) Reset() {
 		c.EnableTracing()
 	}
 
-	// Set SP
-	c.cpu.WriteRegister(SP, 0x7000)
-
 	c.step_counter = 1
 }
 
