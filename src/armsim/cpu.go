@@ -137,7 +137,7 @@ func (cpu *CPU) Fetch() (instruction uint32) {
 //	instruction - a decoded instruction of type Instruction
 func (cpu *CPU) Decode(instructionBits uint32) (instruction Instruction) {
 	cpu.log.Println("Decoding...")
-	instruction = Decode(instructionBits, cpu.logOut)
+	instruction = Decode(cpu, instructionBits)
 	return
 }
 

@@ -73,7 +73,7 @@ func TestExecute(t *testing.T) {
 	ram := NewMemory(32*1024, nil)
 	registers := NewMemory(16*4, nil)
 	cpu := NewCPU(ram, registers, nil)
-	instruction := Decode(0x0, nil)
+	instruction := Decode(cpu, 0x0)
 
 	cpu.Execute(instruction)
 }

@@ -3,6 +3,11 @@
 
 package armsim
 
+import (
+	"fmt"
+	"log"
+)
+
 const (
 	LSL uint32 = iota
 	LSR
@@ -14,23 +19,35 @@ type BarrelShifter struct {
 	Type        uint32
 	ShiftAmount uint32
 	Data        uint32
+	Rs          uint32
+	Rn          uint32
+	i           bool
+	log         *log.Logger
 }
 
 func NewFromOperand2(operand2 uint32, i bool, cpu *CPU) (b *BarrelShifter) {
+	var shift, shift_amount, data uint32
+	var rs, rn uint32 = 17, 17
 	if i {
-		b = &BarrelShifter{ROR, ExtractShiftBits(operand2, 8, 12) * 2, ExtractShiftBits(operand2, 0, 8)}
+		shift = ROR
+		shift_amount = ExtractShiftBits(operand2, 8, 12) * 2
+		data = ExtractShiftBits(operand2, 0, 8)
 	} else {
-		rm, _ := cpu.FetchRegisterFromInstruction(ExtractShiftBits(operand2, 0, 4))
-		shift := ExtractShiftBits(operand2, 5, 7)
+		rn = ExtractShiftBits(operand2, 0, 4)
+		data, _ = cpu.FetchRegisterFromInstruction(rn)
+		shift = ExtractShiftBits(operand2, 5, 7)
 		if (operand2 & 0x10) == 0 {
 			// Immediate shift
-			b = &BarrelShifter{shift, ExtractShiftBits(operand2, 7, 12), rm}
+			shift_amount = ExtractShiftBits(operand2, 7, 12)
 		} else {
 			// Register shift
-			rs, _ := cpu.FetchRegisterFromInstruction(ExtractShiftBits(operand2, 8, 12))
-			b = &BarrelShifter{shift, rs, rm}
+			rs = ExtractShiftBits(operand2, 8, 12)
+			shift_amount, _ = cpu.FetchRegisterFromInstruction(rs)
 		}
 	}
+
+	b = &BarrelShifter{shift, shift_amount, data, rs, rn, i, log.New(cpu.logOut, "BarrelShifter: ", 0)}
+
 	return
 }
 
@@ -43,26 +60,59 @@ func (b *BarrelShifter) Shift() (result uint32) {
 	case LSR:
 		result = b.Data >> b.ShiftAmount
 	case ASR:
-		var mask uint32 = 0x0
-		if (b.Data & 0x80000000) > 0 {
-			for i := 0; uint32(i) < b.ShiftAmount; i++ {
-				mask >>= 1
-				mask += 0x80000000
-			}
-		}
-		result = (b.Data >> b.ShiftAmount) | mask
+		result = asr(b.Data, b.ShiftAmount)
 	}
 	return
 }
 
-func (b *BarrelShifter) Rs() (rs uint32) {
+func (b *BarrelShifter) GetRs() (rs uint32) {
 	return b.ShiftAmount
 }
 
-func (b *BarrelShifter) Rm() (rs uint32) {
+func (b *BarrelShifter) GetRm() (rm uint32) {
 	return b.Data
 }
 
-func ror(value uint32, nBits uint32) (result uint32) {
+func (b *BarrelShifter) Disassembly() (operands string) {
+	var mnemonic, data string
+	if b.i {
+		return fmt.Sprintf("#%d", b.Shift())
+	} else {
+		switch b.Type {
+		case ROR:
+			mnemonic = "ror"
+		case LSL:
+			mnemonic = "lsl"
+		case LSR:
+			mnemonic = "lsr"
+		case ASR:
+			mnemonic = "asr"
+		}
+		if b.Rs < 16 {
+			// Register shift
+			data = fmt.Sprintf("r%d", b.GetRs())
+		} else {
+			// Immediate shift
+			data = fmt.Sprintf("#%d", b.ShiftAmount)
+		}
+	}
+	operands = fmt.Sprintf("r%d, %s %s", b.Rn, mnemonic, data)
+	b.log.Println(operands)
+	return
+}
+
+func ror(value, nBits uint32) (result uint32) {
 	return (value >> nBits) | (value<<(32-nBits))&0xFFFFFFFF
+}
+
+func asr(value, nBits uint32) (result uint32) {
+	var mask uint32 = 0x0
+	if (value & 0x80000000) > 0 {
+		for i := 0; uint32(i) < nBits; i++ {
+			mask >>= 1
+			mask += 0x80000000
+		}
+	}
+	result = (value >> nBits) | mask
+	return
 }

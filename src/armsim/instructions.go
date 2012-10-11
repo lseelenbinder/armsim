@@ -5,15 +5,33 @@
 package armsim
 
 import (
-	"io"
+	"fmt"
 	"log"
-	"os"
 )
 
 // Implements a Go interface allowing polymorphism, Go style.
 type Instruction interface {
 	Execute(cpu *CPU) error
+	Disassembly() string
 	decode(base *baseInstruction) error
+}
+
+type baseInstruction struct {
+	// The original bits of the instruction.
+	InstructionBits uint32
+
+	// Type bits
+	Type uint32
+	// Condition bits
+	CondCode uint32
+	// Destination register
+	Rd uint32
+	// First register operand
+	Rn uint32
+
+	log     *log.Logger
+	shifter *BarrelShifter
+	cpu     *CPU
 }
 
 // Decodes an instruction.
@@ -23,14 +41,14 @@ type Instruction interface {
 //
 // Returns:
 //	instruction - a decoded instruction of type Instruction
-func Decode(instructionBits uint32, logOut io.Writer) (instruction Instruction) {
+func Decode(cpu *CPU, instructionBits uint32) (instruction Instruction) {
 	base := new(baseInstruction)
-	if logOut == nil {
-		logOut = os.Stderr
-	}
-	base.log = log.New(logOut, "Instruction Factory: ", 0)
+	base.log = log.New(cpu.logOut, "Instruction Factory: ", 0)
 
 	base.log.Printf("Decoding instruction: 0x%08x", instructionBits)
+
+	// Set instruction's CPU
+	base.cpu = cpu
 
 	// Set instruction bits
 	base.InstructionBits = instructionBits
@@ -55,23 +73,6 @@ func Decode(instructionBits uint32, logOut io.Writer) (instruction Instruction) 
 	instruction = base.BuildFromBase()
 
 	return
-}
-
-type baseInstruction struct {
-	// The original bits of the instruction.
-	InstructionBits uint32
-
-	// Type bits
-	Type uint32
-	// Condition bits
-	CondCode uint32
-	// Destination register
-	Rd uint32
-	// First register operand
-	Rn uint32
-
-	log     *log.Logger
-	shifter *BarrelShifter
 }
 
 func (bi *baseInstruction) BuildFromBase() (instruction Instruction) {
@@ -135,73 +136,6 @@ const (
 	MUL      = 0x10 // 1 0000 (custom opcode)
 )
 
-// Executes a data instruction
-//
-// Parameters:
-//  ram - a pointer to a block of memory, presumably ram
-//  registers - a pointer to a block of memory, presumably a register bank
-//
-// Returns:
-//  err - an error
-func (di *dataInstruction) Execute(cpu *CPU) (err error) {
-	di.log.SetPrefix("Data Instruction (Execute): ")
-	di.log.Printf("Executing...")
-
-	// Parse the Operand2
-	di.shifter = NewFromOperand2(di.Operand2, di.I, cpu)
-	result := di.shifter.Shift()
-	rn, _ := cpu.FetchRegisterFromInstruction(di.Rn)
-
-	// Assertain specific instruction
-
-	switch di.Opcode {
-	case MOV, MNV:
-		di.log.Printf("MOV/MNV")
-		// Negate for MNV
-		if di.Opcode == MNV {
-			result ^= 0xFFFFFFFF
-		}
-		cpu.WriteRegisterFromInstruction(di.Rd, result)
-	case ADD:
-		di.log.Printf("ADD")
-		// Rd = Rn + shifter_operand
-		cpu.WriteRegisterFromInstruction(di.Rd, rn+result)
-	case SUB:
-		di.log.Printf("SUB")
-		// Rd = Rn - shifter_operand
-		cpu.WriteRegisterFromInstruction(di.Rd, rn-result)
-	case RSB:
-		di.log.Printf("RSB")
-		// Rd = shifter_operand - Rn
-		cpu.WriteRegisterFromInstruction(di.Rd, result-rn)
-	case AND:
-		di.log.Printf("AND")
-		// Rd = Rn AND shifter_operand
-		cpu.WriteRegisterFromInstruction(di.Rd, rn&result)
-	case EOR:
-		di.log.Printf("EOR")
-		// Rd = Rn XOR shifter_operand
-		cpu.WriteRegisterFromInstruction(di.Rd, rn^result)
-	case ORR:
-		di.log.Printf("ORR")
-		// Rd = Rn OR shifter_operand
-		cpu.WriteRegisterFromInstruction(di.Rd, rn|result)
-	case BIC:
-		di.log.Printf("BIC")
-		// Rd = Rn AND NOT shifter_operand
-		cpu.WriteRegisterFromInstruction(di.Rd, rn&^result)
-	case MUL:
-		di.log.Printf("MUL")
-		// Rd = Rm * Rs
-		// This instruction is highly irregular, so the actual calculation is:
-		// Rn = Rm * Rs
-		cpu.WriteRegisterFromInstruction(di.Rn, di.shifter.Rm()*di.shifter.Rs())
-	default:
-		di.log.Printf("Unknown. Opcode: %04b", di.Opcode)
-	}
-	return
-}
-
 // Decodes a data instruction
 //
 // Parameters:
@@ -225,6 +159,9 @@ func (di *dataInstruction) decode(base *baseInstruction) (err error) {
 	di.Operand2 = ExtractShiftBits(di.InstructionBits, 0, 12)
 	di.log.Printf("Op2 bits: %012b", di.Operand2)
 
+	// Parse the Operand2
+	di.shifter = NewFromOperand2(di.Operand2, di.I, di.cpu)
+
 	// Get S bit
 	di.S = ExtractShiftBits(di.InstructionBits, 20, 21) == 1
 	di.log.Printf("S bit: %01t", di.S)
@@ -232,6 +169,101 @@ func (di *dataInstruction) decode(base *baseInstruction) (err error) {
 	// Check for MUL
 	if di.I == false && ExtractShiftBits(di.InstructionBits, 4, 5) == 1 && ExtractShiftBits(di.InstructionBits, 7, 8) == 1 {
 		di.Opcode = MUL
+	}
+
+	di.log.Printf("Decoded: %s", di.Disassembly())
+
+	return
+}
+
+// Executes a data instruction
+//
+// Parameters:
+//  ram - a pointer to a block of memory, presumably ram
+//  registers - a pointer to a block of memory, presumably a register bank
+//
+// Returns:
+//  err - an error
+func (di *dataInstruction) Execute(cpu *CPU) (err error) {
+	di.log.SetPrefix("Data Instruction (Execute): ")
+
+	result := di.shifter.Shift()
+	rn, _ := cpu.FetchRegisterFromInstruction(di.Rn)
+
+	// Assertain specific instruction
+
+	switch di.Opcode {
+	case MOV, MNV:
+		// Negate for MNV
+		if di.Opcode == MNV {
+			result ^= 0xFFFFFFFF
+		}
+		cpu.WriteRegisterFromInstruction(di.Rd, result)
+	case ADD:
+		// Rd = Rn + shifter_operand
+		cpu.WriteRegisterFromInstruction(di.Rd, rn+result)
+	case SUB:
+		// Rd = Rn - shifter_operand
+		cpu.WriteRegisterFromInstruction(di.Rd, rn-result)
+	case RSB:
+		// Rd = shifter_operand - Rn
+		cpu.WriteRegisterFromInstruction(di.Rd, result-rn)
+	case AND:
+		// Rd = Rn AND shifter_operand
+		cpu.WriteRegisterFromInstruction(di.Rd, rn&result)
+	case EOR:
+		// Rd = Rn XOR shifter_operand
+		cpu.WriteRegisterFromInstruction(di.Rd, rn^result)
+	case ORR:
+		// Rd = Rn OR shifter_operand
+		cpu.WriteRegisterFromInstruction(di.Rd, rn|result)
+	case BIC:
+		// Rd = Rn AND NOT shifter_operand
+		cpu.WriteRegisterFromInstruction(di.Rd, rn&^result)
+	case MUL:
+		// Rd = Rm * Rs
+		// This instruction is highly irregular, so the actual calculation is:
+		// Rn = Rm * Rs
+		cpu.WriteRegisterFromInstruction(di.Rn, di.shifter.GetRm()*di.shifter.GetRs())
+	default:
+		di.log.Printf("Unknown. Opcode: %04b", di.Opcode)
+	}
+	return
+}
+
+func (di *dataInstruction) Disassembly() (assembly string) {
+	// Get the Opcode
+	switch di.Opcode {
+	case MOV:
+		assembly += "mov"
+	case MNV:
+		assembly += "mnv"
+	case ADD:
+		assembly += "add"
+	case SUB:
+		assembly += "sub"
+	case RSB:
+		assembly += "rsb"
+	case AND:
+		assembly += "and"
+	case EOR:
+		assembly += "eor"
+	case ORR:
+		assembly += "orr"
+	case BIC:
+		assembly += "bic"
+	case MUL:
+		assembly += "mul"
+	default:
+		assembly += "unknown"
+	}
+
+	if di.Opcode == MUL {
+		// Handle this special case
+		assembly += fmt.Sprintf(" r%d, r%d, r%d", di.Rn, di.shifter.Rn, di.shifter.Rs)
+	} else {
+		assembly += fmt.Sprintf(" r%d, ", di.Rd)
+		assembly += di.shifter.Disassembly()
 	}
 
 	return
@@ -278,6 +310,8 @@ func (lsi *loadStoreInstruction) decode(base *baseInstruction) (err error) {
 	return
 }
 
+func (lsi *loadStoreInstruction) Disassembly() (assembly string) { return }
+
 type branchInstruction struct {
 	// Embedding a general instruction
 	*baseInstruction
@@ -314,6 +348,8 @@ func (bi *branchInstruction) decode(base *baseInstruction) (err error) {
 	return
 }
 
+func (bi *branchInstruction) Disassembly() (assembly string) { return }
+
 type unimplementedInstruction struct {
 }
 
@@ -326,3 +362,5 @@ func (ui *unimplementedInstruction) Execute(cpu *CPU) (err error) {
 func (ui *unimplementedInstruction) decode(base *baseInstruction) (err error) {
 	return
 }
+
+func (ui *unimplementedInstruction) Disassembly() (assembly string) { return }

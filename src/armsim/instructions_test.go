@@ -266,3 +266,7 @@ func TestMUL(t *testing.T) {
 		t.Fatal("expected 0x3f0, got", word)
 	}
 }
+
+func TestDisassembly(t *testing.T) {
+
+}
