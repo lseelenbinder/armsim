@@ -162,7 +162,7 @@ func (di *dataInstruction) Execute(cpu *CPU) (err error) {
 		// Rd = Rn - shifter_operand
 		cpu.WriteRegisterFromInstruction(di.Rd, rn - result)
 	case AND:
-		// Rd = Rn & shifter_operand
+		// Rd = Rn AND shifter_operand
 		cpu.WriteRegisterFromInstruction(di.Rd, rn & result)
 	case BIC:
 		// Rd = Rn AND NOT shifter_operand
