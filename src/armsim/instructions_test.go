@@ -97,3 +97,22 @@ func TestMNV(t *testing.T) {
 		t.Fatal("Exepected 54, got", word)
 	}
 }
+func TestADD(t *testing.T) {
+	c := NewComputer(32, nil)
+	c.registers.WriteWord(PC, 0x4)
+	c.registers.WriteWord(r4, 0x10)
+	c.ram.WriteWord(0x4, 0xE2842030)
+	c.Step()
+	if word, _ := c.registers.ReadWord(r2); word != 0x40 {
+		t.Fatal("Exepected 0x40, got", word)
+	}
+
+	c.Reset()
+	c.registers.WriteWord(PC, 0x4)
+	c.registers.WriteWord(r4, 0x40)
+	c.ram.WriteWord(0x4, 0xE2842030)
+	c.Step()
+	if word, _ := c.registers.ReadWord(r2); word != 0x70 {
+		t.Fatal("Exepected 0x40, got", word)
+	}
+}
