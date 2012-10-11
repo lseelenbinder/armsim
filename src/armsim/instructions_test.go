@@ -8,6 +8,12 @@ func TestCLevel(t *testing.T) {
 	c.Run(nil, nil)
 }
 
+func TestBLevel(t *testing.T) {
+	c := NewComputer(32*1024, nil)
+	c.LoadELF("../../test/btest.exe")
+	c.Run(nil, nil)
+}
+
 func TestMOV(t *testing.T) {
 	// Test MOV immediate
 	c := NewComputer(32, nil)
