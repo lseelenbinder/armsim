@@ -7,6 +7,7 @@ package armsim
 import (
 	"io"
 	"log"
+	"os"
 )
 
 // Implements a Go interface allowing polymorphism, Go style.
@@ -24,6 +25,9 @@ type Instruction interface {
 //	instruction - a decoded instruction of type Instruction
 func Decode(instructionBits uint32, logOut io.Writer) (instruction Instruction) {
 	base := new(baseInstruction)
+	if logOut == nil {
+		logOut = os.Stderr
+	}
 	base.log = log.New(logOut, "Instruction Factory: ", 0)
 
 	base.log.Printf("Decoding instruction: 0x%08x", instructionBits)

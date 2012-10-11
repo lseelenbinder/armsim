@@ -3,10 +3,7 @@
 
 package armsim
 
-import (
-	"testing"
-	"time"
-)
+import "testing"
 
 func TestNewCPU(t *testing.T) {
 	var cpu *CPU
@@ -67,8 +64,8 @@ func TestDecode(t *testing.T) {
 	registers := NewMemory(16*4, nil)
 	cpu := NewCPU(ram, registers, nil)
 
-	// Does nothing
-	cpu.Decode()
+	// I'm depending on my Instruction unit tests
+	cpu.Decode(0x0)
 }
 
 func TestExecute(t *testing.T) {
@@ -76,15 +73,7 @@ func TestExecute(t *testing.T) {
 	ram := NewMemory(32*1024, nil)
 	registers := NewMemory(16*4, nil)
 	cpu := NewCPU(ram, registers, nil)
+	instruction := Decode(0x0, nil)
 
-	// Should wait at least 0.25 seconds and no more than 0.26 seconds
-	start := time.Now().Nanosecond()
-	cpu.Execute()
-	end := time.Now().Nanosecond()
-
-	// Accuracy of 100 milliseconds (0.1 seconds)
-	if int64(end-start)-(time.Duration(250)*time.Millisecond).Nanoseconds() >
-		(time.Duration(100) * time.Millisecond).Nanoseconds() {
-		t.Fatal("Did not wait a quarter second.")
-	}
+	cpu.Execute(instruction)
 }
