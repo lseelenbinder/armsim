@@ -128,6 +128,7 @@ const (
 	ADD = 0x4 // 0100
 	SUB = 0x2 // 0010
 	AND = 0x0 // 0000
+	BIC = 0xE // 1110
 )
 
 // Executes a data instruction
@@ -163,6 +164,9 @@ func (di *dataInstruction) Execute(cpu *CPU) (err error) {
 	case AND:
 		// Rd = Rn & shifter_operand
 		cpu.WriteRegisterFromInstruction(di.Rd, rn & result)
+	case BIC:
+		// Rd = Rn AND NOT shifter_operand
+		cpu.WriteRegisterFromInstruction(di.Rd, rn &^ result)
 	}
 	return
 }

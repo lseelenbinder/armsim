@@ -143,18 +143,38 @@ func TestAND(t *testing.T) {
 	c := NewComputer(32, nil)
 	c.registers.WriteWord(PC, 0x4)
 	c.registers.WriteWord(r4, 0x10)
-	c.ram.WriteWord(0x4, 0xE2822030)
+	c.ram.WriteWord(0x4, 0xE2042030)
 	c.Step()
 	if word, _ := c.registers.ReadWord(r2); word != 0x10 {
-		t.Fatal("Exepected 0x40, got", word)
+		t.Fatal("expected 0x10, got", word)
 	}
 
 	c.Reset()
 	c.registers.WriteWord(PC, 0x4)
 	c.registers.WriteWord(r4, 0x20)
-	c.ram.WriteWord(0x4, 0xE2822030)
+	c.ram.WriteWord(0x4, 0xE2042030)
 	c.Step()
 	if word, _ := c.registers.ReadWord(r2); word != 0x20 {
-		t.Fatal("Exepected 0x40, got", word)
+		t.Fatal("expected 0x20, got", word)
+	}
+}
+
+func TestBIC(t *testing.T) {
+	c := NewComputer(32, nil)
+	c.registers.WriteWord(PC, 0x4)
+	c.registers.WriteWord(r4, 0x10)
+	c.ram.WriteWord(0x4, 0xE2E22030)
+	c.Step()
+	if word, _ := c.registers.ReadWord(r2); word != 0x0 {
+		t.Fatal("expected 0x0, got", word)
+	}
+
+	c.Reset()
+	c.registers.WriteWord(PC, 0x4)
+	c.registers.WriteWord(r4, 0x20)
+	c.ram.WriteWord(0x4, 0xE2E22030)
+	c.Step()
+	if word, _ := c.registers.ReadWord(r2); word != 0x0 {
+		t.Fatal("expected 0x0, got", word)
 	}
 }
