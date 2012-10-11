@@ -16,6 +16,7 @@ type Options struct {
 	memorySize uint
 	tracing    bool
 	gui        bool
+	exec bool
 	logFile    string
 }
 
@@ -84,7 +85,7 @@ func main() {
 		s := web.Server{c, options.fileName, halting, finishing, nil}
 		// Launch the webserver
 		s.Launch(logFile)
-	} else {
+	} else if options.exec {
 		// Run the program
 		c.Run(halting, finishing)
 	}
@@ -100,6 +101,7 @@ func processFlags() (options *Options, err error) {
 	flag.StringVar(&options.logFile, "log", "", "Log file")
 	flag.BoolVar(&options.tracing, "trace", true, "Output trace.log file (default=enabled)")
 	flag.BoolVar(&options.gui, "gui", true, "Use gui instead of command line")
+	flag.BoolVar(&options.exec, "exec", true, "Load file, execute and then close program")
 
 	// Parse Options
 	flag.Parse()
@@ -109,6 +111,10 @@ func processFlags() (options *Options, err error) {
 	if options.memorySize > 1048576 {
 		err = errors.New("RAM size is too large. Must be under 1MB (1048576).")
 		return
+	}
+
+	if options.exec && options.fileName != "" {
+		options.gui = false
 	}
 
 	if !options.gui {
