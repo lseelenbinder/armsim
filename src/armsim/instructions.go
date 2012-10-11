@@ -126,6 +126,7 @@ const (
 	MOV byte = 0xD // 1101
 	MNV = 0xF // 1111
 	ADD = 0x4 // 0100
+	SUB = 0x2 // 0010
 )
 
 // Executes a data instruction
@@ -141,21 +142,23 @@ func (di *dataInstruction) Execute(cpu *CPU) (err error) {
 
 	// Parse the Operand2
 	di.shifter = NewFromOperand2(di.Operand2, di.I, cpu)
-	shifter_operand := di.shifter.Shift()
+	result := di.shifter.Shift()
+	rn, _ := cpu.FetchRegisterFromInstruction(di.Rn)
 
 	// Assertain specific instruction
 	switch di.Opcode {
 	case MOV, MNV:
 		// Negate for MNV
 		if di.Opcode == MNV {
-			shifter_operand ^= 0xFFFFFFFF
+			result ^= 0xFFFFFFFF
 		}
-		cpu.WriteRegisterFromInstruction(di.Rd, shifter_operand)
+		cpu.WriteRegisterFromInstruction(di.Rd, result)
 	case ADD:
 		// Rd = Rn + shifter_operand
-		rn, _ := cpu.FetchRegisterFromInstruction(di.Rn)
-		shifter_operand = rn + shifter_operand
-		cpu.WriteRegisterFromInstruction(di.Rd, shifter_operand)
+		cpu.WriteRegisterFromInstruction(di.Rd, rn + result)
+	case SUB:
+		// Rd = Rn - shifter_operand
+		cpu.WriteRegisterFromInstruction(di.Rd, rn - result)
 	}
 	return
 }
