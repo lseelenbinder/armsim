@@ -20,10 +20,10 @@ type Instruction interface {
 // Holds values typical to all ARM instructions.
 type baseInstruction struct {
 	InstructionBits uint32 // The original bits of the instruction.
-	Type uint32 // Type bits
-	CondCode uint32 // Condition bits
-	Rd uint32 // Destination register
-	Rn uint32 // First register operand
+	Type            uint32 // Type bits
+	CondCode        uint32 // Condition bits
+	Rd              uint32 // Destination register
+	Rn              uint32 // First register operand
 
 	log     *log.Logger
 	shifter *BarrelShifter
@@ -108,9 +108,9 @@ func (bi *baseInstruction) BuildFromBase() (instruction Instruction) {
 type dataInstruction struct {
 	*baseInstruction // Embed a general instruction
 
-	Opcode byte // Opcode
-	S bool // S bit
-	I bool // I bit
+	Opcode   byte   // Opcode
+	S        bool   // S bit
+	I        bool   // I bit
 	Operand2 uint32 // Second operand
 }
 
@@ -266,14 +266,14 @@ func (di *dataInstruction) Disassemble() (assembly string) {
 type loadStoreInstruction struct {
 	*baseInstruction // Embed a general instruction
 
-	I bool 	// I bit
-	P bool 	// P bit
-	U bool 	// U bit
-	B bool 	// B bit
-	W bool 	// W bit
-	L bool 	// L bit
+	I bool // I bit
+	P bool // P bit
+	U bool // U bit
+	B bool // B bit
+	W bool // W bit
+	L bool // L bit
 
-	offset12 uint32	// Offset
+	offset12 uint32         // Offset
 	shifter  *BarrelShifter // Embed a shifter to handle operand2
 }
 

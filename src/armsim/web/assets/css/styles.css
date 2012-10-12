@@ -41,7 +41,7 @@ html {
   display: inline;
 }
 
-#registers tr td:last-child {
+#registers tr td:last-child, #stack tr td:last-child {
   font-family: "Consolas", monospace;
 }
 

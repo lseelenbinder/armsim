@@ -149,6 +149,7 @@ function update(data) {
   updateFlags(data.Flags);
   updateDisassembly(data.Disassembly, data.Registers[15]);
   updateRegisters(data.Registers);
+  updateStack(data.Stack, data.Registers[13]);
   updateMemory(data.Memory);
   updateChecksum(data.Checksum);
 }
@@ -176,6 +177,14 @@ function updateRegisters(registers) {
   });
 }
 
+function updateStack(stack, sp) {
+  $("#stack tbody").empty();
+  $.each(stack, function (i) {
+    $("#stack tbody").append("<tr><td>" + hexToString(sp) + "</td><td>" + hexToString(stack[i]) + "</td></tr");
+    sp += 0x4;
+  });
+}
+
 function updateDisassembly(instructions, pc) {
   $("#instructions").empty();
   var address = pc - 8;
@@ -183,17 +192,17 @@ function updateDisassembly(instructions, pc) {
     var encoded = parseInt(instructions[i].split("||")[0], 16);
     var decoded = instructions[i].split("||")[1].split(" ")[0] + "\t";
     var arguments = instructions[i].split("||")[1].split(" ").slice(1).join(" ");
-    var comments = "";  
+    var comments = "";
     if (address == pc) {
       var active = "alert alert-success"
     } else {
       var active = "";
     }
     $("#instructions").append(
-      "<div class='instruction " + active + "'><span class='address'>" + hexToString(address) + 
-      "</span><span class='encoded'>" + hexToString(encoded) + 
-      "</span><span class='decoded'>" + decoded + 
-      "<span class='arguments'>" + arguments + 
+      "<div class='instruction " + active + "'><span class='address'>" + hexToString(address) +
+      "</span><span class='encoded'>" + hexToString(encoded) +
+      "</span><span class='decoded'>" + decoded +
+      "<span class='arguments'>" + arguments +
       "</span></span><span class='comment'>" + comments + "</span></div>");
     address += 4
   });

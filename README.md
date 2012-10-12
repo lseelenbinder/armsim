@@ -89,7 +89,7 @@ all like buttons!).
   - Flags: shows the status of the four CPSR flags (hint: if there's nothing there
     they aren't active; if there's a flag, it's true.)
   - Registers: shows the contents of r0 - r14, plus r15, the program counter
-  - Stack: (not implemented) will show the top few spots in the stack
+  - Stack: shows the top five spots in the stack
 
 Instruction Implementation
 --------------------------

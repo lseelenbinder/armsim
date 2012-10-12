@@ -44,6 +44,7 @@ type ComputerStatus struct {
 	Flags       [4]bool    // CPSR Flags
 	Disassembly []string   // The 2 previous instructions, current instruction, and next 7 instructions
 	Registers   [16]uint32 // A representation of the registers
+	Stack       []uint32   // A representation of the top of the stack
 	Memory      []string   // A string representation of the RAM
 	Steps       uint64     // The number of steps executed so far (step_counter)
 	Checksum    int32      // Current RAM Checksum
@@ -132,8 +133,23 @@ func (c *Computer) Status() (status ComputerStatus) {
 		status.Registers[i], _ = c.registers.ReadWord(uint32(i << 2))
 	}
 
-	status.Disassembly = make([]string, 8)
+	sp, _ := c.cpu.FetchRegister(SP)
+	stop := uint32(0x7000)
+	stackSize := (stop-sp)/4 + 1
+	if stackSize > 5 {
+		stop = sp + 0x4*5
+		stackSize = 5
+	}
+	status.Stack = make([]uint32, stackSize)
+	c.log.Printf("Size of Stack: %#x (sp: %#x)", stackSize, sp)
 	var i uint32
+	for ; sp < stop; sp += 0x4 {
+		status.Stack[i], _ = c.ram.ReadWord(sp)
+		i++
+	}
+
+	status.Disassembly = make([]string, 8)
+	i = 0
 	for pc := status.Registers[15] - 8; pc < status.Registers[15]+4*6; pc += 4 {
 		iBits, _ := c.ram.ReadWord(pc)
 		instruction := Decode(c.cpu, iBits)
@@ -142,7 +158,7 @@ func (c *Computer) Status() (status ComputerStatus) {
 	}
 
 	status.Memory = make([]string, c.memSize)
-	for ; i < c.memSize; i++ {
+	for i = 0; i < c.memSize; i++ {
 		b, _ := c.ram.ReadByte(i)
 		status.Memory[i] = fmt.Sprintf("%x", b)
 	}

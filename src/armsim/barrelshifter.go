@@ -122,6 +122,7 @@ func (b *BarrelShifter) Disassemble() (operands string) {
 func ror(value, nBits uint32) (result uint32) {
 	return (value >> nBits) | (value<<(32-nBits))&0xFFFFFFFF
 }
+
 // Performs an Arithmetic Shift Right on value by nBits and 
 // returns the result.
 func asr(value, nBits uint32) (result uint32) {
