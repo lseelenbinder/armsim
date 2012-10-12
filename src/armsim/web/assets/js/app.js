@@ -189,6 +189,9 @@ function updateDisassembly(instructions, pc) {
   $("#instructions").empty();
   var address = pc - 8;
   $.each(instructions, function (i) {
+    if (instructions[i] == "") {
+      return;
+    }
     var encoded = parseInt(instructions[i].split("||")[0], 16);
     var decoded = instructions[i].split("||")[1].split(" ")[0] + "\t";
     var arguments = instructions[i].split("||")[1].split(" ").slice(1).join(" ");
