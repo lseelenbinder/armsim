@@ -141,7 +141,11 @@ func (cpu *CPU) Decode(instructionBits uint32) (instruction Instruction) {
 	return
 }
 
-// Executes an instruction. (Currently pauses execution 0.25 seconds.)
+// Executes an instruction.
+//
+// Parameter: i - Instruction interface
+//
+// Returns: status - bool determining if the CPU should continue executing
 func (cpu *CPU) Execute(i Instruction) (status bool) {
 	cpu.log.Println("Executing...", i.Disassemble())
 	return i.Execute()

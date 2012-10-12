@@ -8,6 +8,7 @@ import (
 	"log"
 )
 
+// Types of shifts
 const (
 	LSL uint32 = iota
 	LSR
@@ -15,6 +16,8 @@ const (
 	ROR
 )
 
+// Provides an succinct way of keeping track of 
+// the BarrelShifter in ARM
 type BarrelShifter struct {
 	Type        uint32 // Type of Shift
 	ShiftAmount uint32 // How much to shift
@@ -25,6 +28,12 @@ type BarrelShifter struct {
 	log         *log.Logger
 }
 
+// Creates a new BarrelShifter from an Operand2
+//
+// Parameters:
+//  operand2 - 12 bits that represent an ARM operand2
+//  i - whether or not the operand2 is a mov immediate value
+//  cpu - a pointed to the instructions CPU class
 func NewFromOperand2(operand2 uint32, i bool, cpu *CPU) (b *BarrelShifter) {
 	var shift, shift_amount, data uint32
 	var rs, rn uint32 = 17, 17
@@ -51,6 +60,7 @@ func NewFromOperand2(operand2 uint32, i bool, cpu *CPU) (b *BarrelShifter) {
 	return
 }
 
+// Shifts the data and returns the result.
 func (b *BarrelShifter) Shift() (result uint32) {
 	switch b.Type {
 	case ROR:
@@ -75,6 +85,7 @@ func (b *BarrelShifter) GetRm() (rm uint32) {
 	return b.Data
 }
 
+// Produces proper human-readable representations of various shifts
 func (b *BarrelShifter) Disassemble() (operands string) {
 	var mnemonic, data string
 	if b.i {
@@ -107,10 +118,12 @@ func (b *BarrelShifter) Disassemble() (operands string) {
 	return
 }
 
+// Performs a Rotate Right on value by nBits and returns the result.
 func ror(value, nBits uint32) (result uint32) {
 	return (value >> nBits) | (value<<(32-nBits))&0xFFFFFFFF
 }
-
+// Performs an Arithmetic Shift Right on value by nBits and 
+// returns the result.
 func asr(value, nBits uint32) (result uint32) {
 	var mask uint32 = 0x0
 	if (value & 0x80000000) > 0 {

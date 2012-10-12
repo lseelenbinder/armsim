@@ -1,7 +1,7 @@
 # ARMSIM Project Journal
   by Luke Seelenbinder
 
-## Total Time: 51.25
+### Total Time: 51.25 hours
 
 ## Preparation (Total time: 2 hours)
 1. Investigate GO as a possibility for the project. (Time: 2 hours)

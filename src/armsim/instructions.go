@@ -10,25 +10,20 @@ import (
 	"strings"
 )
 
-// Implements a Go interface allowing polymorphism, Go style.
+// Implements a Go interface allowing Instruction polymorphism, Go style.
 type Instruction interface {
 	Execute() (status bool)
 	Disassemble() string
 	decode(base *baseInstruction)
 }
 
+// Holds values typical to all ARM instructions.
 type baseInstruction struct {
-	// The original bits of the instruction.
-	InstructionBits uint32
-
-	// Type bits
-	Type uint32
-	// Condition bits
-	CondCode uint32
-	// Destination register
-	Rd uint32
-	// First register operand
-	Rn uint32
+	InstructionBits uint32 // The original bits of the instruction.
+	Type uint32 // Type bits
+	CondCode uint32 // Condition bits
+	Rd uint32 // Destination register
+	Rn uint32 // First register operand
 
 	log     *log.Logger
 	shifter *BarrelShifter
@@ -48,11 +43,9 @@ func Decode(cpu *CPU, instructionBits uint32) (instruction Instruction) {
 
 	base.log.Printf("Decoding instruction: 0x%08x", instructionBits)
 
-	// Set instruction's CPU
-	base.cpu = cpu
+	base.cpu = cpu // Set instruction's CPU
 
-	// Set instruction bits
-	base.InstructionBits = instructionBits
+	base.InstructionBits = instructionBits // Set instruction bits
 	base.shifter = new(BarrelShifter)
 
 	// Get condition
@@ -76,9 +69,10 @@ func Decode(cpu *CPU, instructionBits uint32) (instruction Instruction) {
 	return
 }
 
+// Decodes a specific instruction from a baseInstruction.
+// 
+// Returns an instruction interface.
 func (bi *baseInstruction) BuildFromBase() (instruction Instruction) {
-	// Check edge cases
-
 	// Check type of instruction and call proper decode method
 	switch bi.Type {
 	case 0x0, 0x1:
@@ -110,18 +104,14 @@ func (bi *baseInstruction) BuildFromBase() (instruction Instruction) {
 	return
 }
 
+// Holds values typical to a DataInstruction.
 type dataInstruction struct {
-	// Embedding a general instruction
-	*baseInstruction
+	*baseInstruction // Embed a general instruction
 
-	// Opcode
-	Opcode byte
-	// S bit
-	S bool
-	// I bit
-	I bool
-	// Second operand
-	Operand2 uint32
+	Opcode byte // Opcode
+	S bool // S bit
+	I bool // I bit
+	Operand2 uint32 // Second operand
 }
 
 const (
@@ -190,7 +180,7 @@ func (di *dataInstruction) Execute() (status bool) {
 	result := di.shifter.Shift()
 	rn, _ := di.cpu.FetchRegisterFromInstruction(di.Rn)
 
-	// Assertain specific instruction
+	// Ascertain specific instruction
 
 	switch di.Opcode {
 	case MOV, MNV:
@@ -226,11 +216,14 @@ func (di *dataInstruction) Execute() (status bool) {
 		// Rn = Rm * Rs
 		di.cpu.WriteRegisterFromInstruction(di.Rn, di.shifter.GetRm()*di.shifter.GetRs())
 	default:
-		di.log.Printf("Unknown. Opcode: %04b", di.Opcode)
+		di.log.Printf("Unknown Opcode: %04b", di.Opcode)
 	}
 	return true
 }
 
+// Builds an assembly string representing the instruction.
+//
+// Returns a string containing the mnemonic and related arguments.
 func (di *dataInstruction) Disassemble() (assembly string) {
 	// Get the Opcode
 	switch di.Opcode {
@@ -269,26 +262,19 @@ func (di *dataInstruction) Disassemble() (assembly string) {
 	return
 }
 
+// Holds values typical to Load / Store instructions.
 type loadStoreInstruction struct {
-	// Embedding a general instruction
-	*baseInstruction
+	*baseInstruction // Embed a general instruction
 
-	// I bit
-	I bool
-	// P bit
-	P bool
-	// U bit
-	U bool
-	// B bit
-	B bool
-	// W bit
-	W bool
-	// L bit
-	L bool
+	I bool 	// I bit
+	P bool 	// P bit
+	U bool 	// U bit
+	B bool 	// B bit
+	W bool 	// W bit
+	L bool 	// L bit
 
-	// Offset
-	offset12 uint32
-	shifter  *BarrelShifter
+	offset12 uint32	// Offset
+	shifter  *BarrelShifter // Embed a shifter to handle operand2
 }
 
 // Decodes a load/store instruction
@@ -405,6 +391,9 @@ func (lsi *loadStoreInstruction) Execute() (status bool) {
 	return true
 }
 
+// Builds an assembly string representing the instruction.
+//
+// Returns a string containing the mnemonic and related arguments.
 func (lsi *loadStoreInstruction) Disassemble() (assembly string) {
 	var mnemonic, arguments, writeback, shift string
 
@@ -452,23 +441,17 @@ func (lsi *loadStoreInstruction) calculateAddress(base, offset uint32) (address 
 	return
 }
 
+// Holds values typical to Load / Store Multiple instructions.
 type loadStoreMultipleInstruction struct {
-	// Embedding a general instruction
-	*baseInstruction
+	*baseInstruction // Embed a general instruction
 
-	// P bit
-	P bool
-	// U bit
-	U bool
-	// S bit
-	S bool
-	// W bit
-	W bool
-	// L bit
-	L bool
+	P bool // P bit
+	U bool // U bit
+	S bool // S bit
+	W bool // W bit
+	L bool // L bit
 
-	// Registers
-	registerList [16]bool
+	registerList [16]bool // Registers
 }
 
 // Decodes a load/store multiple instruction
@@ -559,6 +542,9 @@ func (lsi *loadStoreMultipleInstruction) Execute() (status bool) {
 	return true
 }
 
+// Builds an assembly string representing the instruction.
+//
+// Returns a string containing the mnemonic and related arguments.
 func (lsi *loadStoreMultipleInstruction) Disassemble() (assembly string) {
 	var mnemonic, registers string
 
@@ -603,6 +589,7 @@ func (lsi *loadStoreMultipleInstruction) CountSetBits() (count uint32) {
 	return
 }
 
+// Holds values typical to Branch instructions.
 type branchInstruction struct {
 	// Embedding a general instruction
 	*baseInstruction
@@ -638,12 +625,22 @@ func (bi *branchInstruction) decode(base *baseInstruction) {
 	return
 }
 
+// Builds an assembly string representing the instruction.
+//
+// Returns a string containing the mnemonic and related arguments.
 func (bi *branchInstruction) Disassemble() (assembly string) { return }
 
+// Holds values typical to Software Interrupt instructions.
 type swiInstruction struct {
 	Data uint32
 }
 
+// Decodes a interrupt instruction
+//
+// Parameters:
+//  base - a generic instruction containing most information
+//
+// Returns: None
 func (swi *swiInstruction) decode(base *baseInstruction) {
 	// I don't even really need this data, but the OS might.
 	swi.Data = ExtractBits(base.InstructionBits, 0, 25)
@@ -662,10 +659,14 @@ func (si *swiInstruction) Execute() (status bool) {
 	return false
 }
 
+// Builds an assembly string representing the instruction.
+//
+// Returns a string containing the mnemonic and related arguments.
 func (swi *swiInstruction) Disassemble() (assembly string) {
 	return fmt.Sprintf("swi #%d", swi.Data)
 }
 
+// Stub class to fake unknown or unimplemented instructions
 type unimplementedInstruction struct{}
 
 // Stub method to fake execution of unimplemented instructions
@@ -678,4 +679,5 @@ func (ui *unimplementedInstruction) decode(base *baseInstruction) {
 	return
 }
 
+// Stub method to fake disassemble of unimplemented instructions
 func (ui *unimplementedInstruction) Disassemble() (assembly string) { return "unk" }

@@ -47,10 +47,6 @@ func TestLSL(t *testing.T) {
 	}
 }
 
-func TestOperand2(t *testing.T) {
-
-}
-
 func TestBDisassemble(t *testing.T) {
 	c := NewComputer(32*1024, os.Stderr)
 
@@ -75,6 +71,4 @@ func TestBDisassemble(t *testing.T) {
 	if a := b.Disassemble(); a != "r1, lsr #2" {
 		t.Fatal("Expected 'lsr #2', got", a)
 	}
-
-	// Test register shift TODO
 }
