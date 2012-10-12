@@ -70,7 +70,7 @@ func Decode(cpu *CPU, instructionBits uint32) (instruction Instruction) {
 }
 
 // Decodes a specific instruction from a baseInstruction.
-// 
+//
 // Returns an instruction interface.
 func (bi *baseInstruction) BuildFromBase() (instruction Instruction) {
 	// Check type of instruction and call proper decode method
@@ -546,7 +546,7 @@ func (lsi *loadStoreMultipleInstruction) Execute() (status bool) {
 //
 // Returns a string containing the mnemonic and related arguments.
 func (lsi *loadStoreMultipleInstruction) Disassemble() (assembly string) {
-	var mnemonic, registers string
+	var mnemonic, registers, rn string
 
 	if lsi.L {
 		mnemonic += "ldm"
@@ -575,7 +575,12 @@ func (lsi *loadStoreMultipleInstruction) Disassemble() (assembly string) {
 	}
 	registers = strings.TrimSpace(registers)
 
-	assembly = fmt.Sprintf("%s r%d, {%s}", mnemonic, lsi.Rn, registers)
+	rn = fmt.Sprintf("r%d", lsi.Rn)
+	if lsi.W {
+		rn += "!"
+	}
+
+	assembly = fmt.Sprintf("%s %s, {%s}", mnemonic, rn, registers)
 
 	return
 }
