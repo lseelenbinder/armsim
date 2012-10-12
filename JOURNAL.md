@@ -1,6 +1,8 @@
 # ARMSIM Project Journal
   by Luke Seelenbinder
 
+## Total Time: 51.25
+
 ## Preparation (Total time: 2 hours)
 1. Investigate GO as a possibility for the project. (Time: 2 hours)
 
@@ -142,3 +144,28 @@
     and fixed and probably big bugs, too. Because of the scope of the system, I
     don't yet feel like I have complete control over it. But, for now, it works
     unless crazy things are thrown at it, and that is what matters.
+
+## Simulator I (Total Time: 17 hours)
+1. Build Instruction Decode and Execution Pathway (Time: 6 hours)
+  - Notes:
+    - I needed to build a system by which I could take arbitrary instructions and
+      narrow them down quickly and effciently. I ended up building a solution 
+      based on a BaseInstruction class and general classes for each type of 
+      instruction. By also including a BarrelShifter class, I made handling of
+      operand2s very simple.
+    - I found Go's interfaces very intuitive and good for the system I ended up 
+      building.
+    - Building the BarrelShifter class was difficult, but not nearly as difficult
+      as I expected.
+    - A good OOP approach to the instructions made building, testing and programming
+      very simple.
+  - References:
+    - [ROR algorithm](http://stackoverflow.com/questions/3476969/rotate-bits-right-operation-in-ruby)
+    - I'm not entirely sure where the ASR logic came from. I think it was partially my solution
+      with a bit of googling mixed in.
+2. Build Instructions (Total time: 11 hours)
+  - Notes:
+    - This process was not very difficult (though some instructions proved difficult to get just right).
+    - I found comparison of the trace's output with expected to be a very good way to test, at least initally.
+    - The sheer amount of information required when programming an instruction is very laborious.
+      I can't imagine those that program instruction sets with real hardware.
