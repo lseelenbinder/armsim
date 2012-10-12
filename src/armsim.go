@@ -16,7 +16,7 @@ type Options struct {
 	memorySize uint
 	tracing    bool
 	gui        bool
-	exec bool
+	exec       bool
 	logFile    string
 }
 

@@ -143,7 +143,7 @@ func (cpu *CPU) Decode(instructionBits uint32) (instruction Instruction) {
 
 // Executes an instruction. (Currently pauses execution 0.25 seconds.)
 func (cpu *CPU) Execute(i Instruction) (status bool) {
-	cpu.log.Println("Executing...")
+	cpu.log.Println("Executing...", i.Disassemble())
 	return i.Execute()
 }
 

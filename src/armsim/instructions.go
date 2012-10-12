@@ -7,6 +7,7 @@ package armsim
 import (
 	"fmt"
 	"log"
+	"strings"
 )
 
 // Implements a Go interface allowing polymorphism, Go style.
@@ -91,7 +92,7 @@ func (bi *baseInstruction) BuildFromBase() (instruction Instruction) {
 		instruction = new(loadStoreInstruction)
 	case 0x4:
 		bi.log.Printf("Load/Store: Multiple")
-		instruction = new(unimplementedInstruction)
+		instruction = new(loadStoreMultipleInstruction)
 	case 0x5:
 		bi.log.Printf("Branch")
 		instruction = new(branchInstruction)
@@ -451,6 +452,157 @@ func (lsi *loadStoreInstruction) calculateAddress(base, offset uint32) (address 
 	return
 }
 
+type loadStoreMultipleInstruction struct {
+	// Embedding a general instruction
+	*baseInstruction
+
+	// P bit
+	P bool
+	// U bit
+	U bool
+	// S bit
+	S bool
+	// W bit
+	W bool
+	// L bit
+	L bool
+
+	// Registers
+	registerList [16]bool
+}
+
+// Decodes a load/store multiple instruction
+//
+// Parameters:
+//  base - a generic instruction containing most information
+//
+// Returns: None
+func (lsi *loadStoreMultipleInstruction) decode(base *baseInstruction) {
+	lsi.baseInstruction = base
+	lsi.log.SetPrefix("Load/Store Decoder: ")
+	// P bit
+	lsi.P = ExtractShiftBits(base.InstructionBits, 24, 25) == 1
+	lsi.log.Printf("P bit: %t", lsi.P)
+	// U bit
+	lsi.U = ExtractShiftBits(base.InstructionBits, 23, 24) == 1
+	lsi.log.Printf("U bit: %t", lsi.U)
+	// S bit
+	lsi.S = ExtractShiftBits(base.InstructionBits, 22, 23) == 1
+	lsi.log.Printf("S bit: %t", lsi.S)
+	// W bit
+	lsi.W = ExtractShiftBits(base.InstructionBits, 21, 22) == 1
+	lsi.log.Printf("W bit: %t", lsi.W)
+	// L bit
+	lsi.L = ExtractShiftBits(base.InstructionBits, 20, 21) == 1
+	lsi.log.Printf("L bit: %t", lsi.L)
+
+	for i := 0; i < 16; i++ {
+		lsi.registerList[i] = ExtractShiftBits(base.InstructionBits, uint32(i), uint32(i+1)) == 1
+	}
+	lsi.log.Println("Registers: ", lsi.registerList)
+
+	return
+}
+
+// Executes a load/store multiple instruction
+//
+// Parameters: None
+//
+// Returns:
+//  status - a boolean that determines if the CPU continues after this
+//  instruction
+func (lsi *loadStoreMultipleInstruction) Execute() (status bool) {
+	var address, start_address, end_address, data uint32
+	Rn, _ := lsi.cpu.FetchRegisterFromInstruction(lsi.Rn)
+
+	if lsi.P {
+		if lsi.U { // Increment before
+			start_address = Rn + 4
+			end_address = Rn + (lsi.CountSetBits() * 4)
+			Rn += lsi.CountSetBits() * 4
+		} else { // Decrement before
+			start_address = Rn - (lsi.CountSetBits() * 4)
+			end_address = Rn - 4
+			Rn -= lsi.CountSetBits() * 4
+		}
+	} else {
+		if lsi.U { // Increment after
+			start_address = Rn
+			end_address = Rn + (lsi.CountSetBits() * 4) - 4
+			Rn += lsi.CountSetBits() * 4
+		} else { // Decrement after
+			start_address = Rn - (lsi.CountSetBits() * 4) + 4
+			end_address = Rn
+			Rn -= lsi.CountSetBits() * 4
+		}
+	}
+	lsi.log.Printf("start_address: %#x; end_address: %#x", start_address, end_address)
+
+	address = start_address
+	for i := 0; i < 16; i++ {
+		if lsi.registerList[i] {
+			if lsi.L { // Load
+				data, _ = lsi.cpu.ram.ReadWord(address)
+				lsi.cpu.WriteRegisterFromInstruction(uint32(i), data)
+			} else { // Store
+				data, _ = lsi.cpu.FetchRegisterFromInstruction(uint32(i))
+				lsi.cpu.ram.WriteWord(address, data)
+			}
+			address += 4
+		}
+	}
+
+	if lsi.W { // Writeback
+		lsi.cpu.WriteRegister(SP, Rn)
+	}
+
+	return true
+}
+
+func (lsi *loadStoreMultipleInstruction) Disassemble() (assembly string) {
+	var mnemonic, registers string
+
+	if lsi.L {
+		mnemonic += "ldm"
+	} else {
+		mnemonic += "stm"
+	}
+
+	if lsi.P {
+		if lsi.U {
+			mnemonic += "ib"
+		} else {
+			mnemonic += "db"
+		}
+	} else {
+		if lsi.U {
+			mnemonic += "ia"
+		} else {
+			mnemonic += "da"
+		}
+	}
+
+	for i := 0; i < 16; i++ {
+		if lsi.registerList[i] {
+			registers += fmt.Sprintf("r%d ", i)
+		}
+	}
+	registers = strings.TrimSpace(registers)
+
+	assembly = fmt.Sprintf("%s r%d, {%s}", mnemonic, lsi.Rn, registers)
+
+	return
+}
+
+func (lsi *loadStoreMultipleInstruction) CountSetBits() (count uint32) {
+	for i := 0; i < 16; i++ {
+		if lsi.registerList[i] {
+			count++
+		}
+	}
+	return
+}
+
 type branchInstruction struct {
 	// Embedding a general instruction
 	*baseInstruction
@@ -510,7 +662,9 @@ func (si *swiInstruction) Execute() (status bool) {
 	return false
 }
 
-func (swi *swiInstruction) Disassemble() (assembly string) { return }
+func (swi *swiInstruction) Disassemble() (assembly string) {
+	return fmt.Sprintf("swi #%d", swi.Data)
+}
 
 type unimplementedInstruction struct{}
 
@@ -524,4 +678,4 @@ func (ui *unimplementedInstruction) decode(base *baseInstruction) {
 	return
 }
 
-func (ui *unimplementedInstruction) Disassemble() (assembly string) { return }
+func (ui *unimplementedInstruction) Disassemble() (assembly string) { return "unk" }
