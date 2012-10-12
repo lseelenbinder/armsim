@@ -82,7 +82,6 @@ all like buttons!).
   - Tracing On/Off: turns the trace.log file on and off
 - Panels
   - Instructions: shows the instructions that are close to the current instruction
-    (currently shows dummy data)
   - Memory: shows the full contents of memory, you can even search for a specific
     address
   - Terminal: (not implemented) will eventually show output and allow input to
@@ -91,6 +90,49 @@ all like buttons!).
     they aren't active; if there's a flag, it's true.)
   - Registers: shows the contents of r0 - r14, plus r15, the program counter
   - Stack: (not implemented) will show the top few spots in the stack
+
+Instruction Implementation
+--------------------------
+
+Data Processing:
+- MOV
+- MNV
+- ADD
+- SUB
+- RSB
+- MUL
+- AND
+- EOR
+- ORR
+- BIC
+
+Operand2 Addressing Modes:
+- Immediate
+- Register with immediate shift
+- Register with register shift
+
+Load / Store:
+- LDR
+- LDRB
+- STR
+- STRB
+- LDM
+- STM
+
+Addressing Modes:
+- Pre-index with and without writeback
+- Post-index with adn without writeback
+- Increment before/after
+- Decrement before/after
+
+Miscellaneous:
+- SWI
+
+Shifts:
+- LSL
+- LSR
+- ROR
+- ASR
 
 Bugs
 ----
