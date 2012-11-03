@@ -203,10 +203,10 @@ func (c *Computer) Trace() (output string) {
 	program_counter, _ := c.registers.ReadWord(PC)
 
 	// Build Flags int
-	cpsr, _ := c.registers.ReadWord(CPSR)
-	flags := ExtractBits(cpsr, N, F) >> F
+	cpsr, _ := c.cpu.FetchRegister(CPSR)
+	flags := ExtractShiftBits(cpsr, V, 32)
 
-	output = fmt.Sprintf("%06d %08X %08X %04d\t", c.step_counter, program_counter-4,
+	output = fmt.Sprintf("%06d %08X %08X %04b\t", c.step_counter, program_counter-4,
 		c.ram.Checksum(), flags)
 	for i := 0; i < 15; i++ {
 		reg, _ := c.registers.ReadWord(uint32(i * 4))

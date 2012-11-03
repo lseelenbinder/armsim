@@ -47,18 +47,12 @@ const (
 
 // Flags
 const (
-	// Ignore first result
-	_ = iota
-	// Negative Flag
-	N uint32 = 32 - iota
-	// Zero Flag
-	Z
-	// Carry Flag
-	C
-	// Overflow Flag
-	V
-	// Overflow Flag (alternative spelling)
-	F = V
+	_        = iota      // Ignore first result
+	N uint32 = 32 - iota // Negative Flag
+	Z                    // Zero Flag
+	C                    // Carry Flag
+	V                    // Overflow Flag
+	F = V                // Overflow Flag (alternative spelling)
 )
 
 // A CPU holds references for RAM and registers a CPU needs to function.

@@ -120,6 +120,7 @@ const (
 	SUB      = 0x2  // 0010
 	RSB      = 0x3  // 0011
 	ADD      = 0x4  // 0100
+	CMP      = 0xA  // 1010
 	ORR      = 0xC  // 1100
 	BIC      = 0xE  // 1110
 	MOV      = 0xD  // 1101
@@ -145,6 +146,11 @@ func (di *dataInstruction) decode(base *baseInstruction) {
 	di.Opcode = byte(ExtractShiftBits(di.InstructionBits, 21, 25))
 	di.log.Printf("Opcode bits: %04b", di.Opcode)
 
+	// Check for MUL
+	if di.I == false && ExtractShiftBits(di.InstructionBits, 4, 5) == 1 && ExtractShiftBits(di.InstructionBits, 7, 8) == 1 {
+		di.Opcode = MUL
+	}
+
 	// Get Operand2
 	di.Operand2 = ExtractShiftBits(di.InstructionBits, 0, 12)
 	di.log.Printf("Op2 bits: %012b", di.Operand2)
@@ -155,11 +161,6 @@ func (di *dataInstruction) decode(base *baseInstruction) {
 	// Get S bit
 	di.S = ExtractShiftBits(di.InstructionBits, 20, 21) == 1
 	di.log.Printf("S bit: %01t", di.S)
-
-	// Check for MUL
-	if di.I == false && ExtractShiftBits(di.InstructionBits, 4, 5) == 1 && ExtractShiftBits(di.InstructionBits, 7, 8) == 1 {
-		di.Opcode = MUL
-	}
 
 	di.log.Printf("Decoded: %s", di.Disassemble())
 
@@ -177,7 +178,7 @@ func (di *dataInstruction) decode(base *baseInstruction) {
 func (di *dataInstruction) Execute() (status bool) {
 	di.log.SetPrefix("Data Instruction (Execute): ")
 
-	result := di.shifter.Shift()
+	shifter_operand := di.shifter.Shift()
 	rn, _ := di.cpu.FetchRegisterFromInstruction(di.Rn)
 
 	// Ascertain specific instruction
@@ -186,35 +187,53 @@ func (di *dataInstruction) Execute() (status bool) {
 	case MOV, MNV:
 		// Negate for MNV
 		if di.Opcode == MNV {
-			result ^= 0xFFFFFFFF
+			shifter_operand ^= 0xFFFFFFFF
 		}
-		di.cpu.WriteRegisterFromInstruction(di.Rd, result)
+		di.cpu.WriteRegisterFromInstruction(di.Rd, shifter_operand)
 	case ADD:
 		// Rd = Rn + shifter_operand
-		di.cpu.WriteRegisterFromInstruction(di.Rd, rn+result)
+		di.cpu.WriteRegisterFromInstruction(di.Rd, rn+shifter_operand)
 	case SUB:
 		// Rd = Rn - shifter_operand
-		di.cpu.WriteRegisterFromInstruction(di.Rd, rn-result)
+		di.cpu.WriteRegisterFromInstruction(di.Rd, rn-shifter_operand)
 	case RSB:
 		// Rd = shifter_operand - Rn
-		di.cpu.WriteRegisterFromInstruction(di.Rd, result-rn)
+		di.cpu.WriteRegisterFromInstruction(di.Rd, shifter_operand-rn)
 	case AND:
 		// Rd = Rn AND shifter_operand
-		di.cpu.WriteRegisterFromInstruction(di.Rd, rn&result)
+		di.cpu.WriteRegisterFromInstruction(di.Rd, rn&shifter_operand)
 	case EOR:
 		// Rd = Rn XOR shifter_operand
-		di.cpu.WriteRegisterFromInstruction(di.Rd, rn^result)
+		di.cpu.WriteRegisterFromInstruction(di.Rd, rn^shifter_operand)
 	case ORR:
 		// Rd = Rn OR shifter_operand
-		di.cpu.WriteRegisterFromInstruction(di.Rd, rn|result)
+		di.cpu.WriteRegisterFromInstruction(di.Rd, rn|shifter_operand)
 	case BIC:
 		// Rd = Rn AND NOT shifter_operand
-		di.cpu.WriteRegisterFromInstruction(di.Rd, rn&^result)
+		di.cpu.WriteRegisterFromInstruction(di.Rd, rn&^shifter_operand)
 	case MUL:
 		// Rd = Rm * Rs
 		// This instruction is highly irregular, so the actual calculation is:
 		// Rn = Rm * Rs
 		di.cpu.WriteRegisterFromInstruction(di.Rn, di.shifter.GetRm()*di.shifter.GetRs())
+	case CMP:
+		// alu_out = Rn - shifter_operand
+		alu_out := rn - shifter_operand
+
+		// N Flag = alu_out[31]
+		di.cpu.registers.SetFlag(CPSR, N, alu_out>>31 == 1)
+
+		// Z Flag = if alu_out == 0 then 1 else 0
+		di.cpu.registers.SetFlag(CPSR, Z, alu_out == 0)
+
+		// C Flag = NOT BorrowFrom(Rn - shifter_operand)
+		di.cpu.registers.SetFlag(CPSR, C, shifter_operand <= rn)
+
+		// V Flag = OverflowFrom(Rn - shifter_operand)
+		// Shift to sign bits and compare
+		v := (shifter_operand>>31 != rn>>31) && (shifter_operand>>31 == alu_out>>31)
+		di.cpu.registers.SetFlag(CPSR, V, v)
+
 	default:
 		di.log.Printf("Unknown Opcode: %04b", di.Opcode)
 	}
@@ -247,6 +266,8 @@ func (di *dataInstruction) Disassemble() (assembly string) {
 		assembly += "bic"
 	case MUL:
 		assembly += "mul"
+	case CMP:
+		assembly += "cmp"
 	default:
 		assembly += "unk"
 	}
