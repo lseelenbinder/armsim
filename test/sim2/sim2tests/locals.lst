@@ -1,0 +1,103 @@
+
+locals.exe:     file format elf32-littlearm
+
+
+Disassembly of section .text:
+
+00008000 <sub>:
+    8000:	e52db004 	push	{fp}		; (str fp, [sp, #-4]!)
+    8004:	e28db000 	add	fp, sp, #0
+    8008:	e24dd04c 	sub	sp, sp, #76	; 0x4c
+    800c:	e50b0040 	str	r0, [fp, #-64]	; 0xffffffc0
+    8010:	e50b1044 	str	r1, [fp, #-68]	; 0xffffffbc
+    8014:	e50b2048 	str	r2, [fp, #-72]	; 0xffffffb8
+    8018:	e50b304c 	str	r3, [fp, #-76]	; 0xffffffb4
+    801c:	e3a03001 	mov	r3, #1
+    8020:	e50b3008 	str	r3, [fp, #-8]
+    8024:	e3a03002 	mov	r3, #2
+    8028:	e50b300c 	str	r3, [fp, #-12]
+    802c:	e3a03003 	mov	r3, #3
+    8030:	e50b3010 	str	r3, [fp, #-16]
+    8034:	e3a03004 	mov	r3, #4
+    8038:	e50b3014 	str	r3, [fp, #-20]	; 0xffffffec
+    803c:	e3a03005 	mov	r3, #5
+    8040:	e50b3018 	str	r3, [fp, #-24]	; 0xffffffe8
+    8044:	e3a03006 	mov	r3, #6
+    8048:	e50b301c 	str	r3, [fp, #-28]	; 0xffffffe4
+    804c:	e3a03007 	mov	r3, #7
+    8050:	e50b3020 	str	r3, [fp, #-32]	; 0xffffffe0
+    8054:	e3a03008 	mov	r3, #8
+    8058:	e50b3024 	str	r3, [fp, #-36]	; 0xffffffdc
+    805c:	e3a03009 	mov	r3, #9
+    8060:	e50b3028 	str	r3, [fp, #-40]	; 0xffffffd8
+    8064:	e3a0300a 	mov	r3, #10
+    8068:	e50b302c 	str	r3, [fp, #-44]	; 0xffffffd4
+    806c:	e3a0300b 	mov	r3, #11
+    8070:	e50b3030 	str	r3, [fp, #-48]	; 0xffffffd0
+    8074:	e3a0300c 	mov	r3, #12
+    8078:	e50b3034 	str	r3, [fp, #-52]	; 0xffffffcc
+    807c:	e3a0300d 	mov	r3, #13
+    8080:	e50b3038 	str	r3, [fp, #-56]	; 0xffffffc8
+    8084:	e51b2008 	ldr	r2, [fp, #-8]
+    8088:	e51b300c 	ldr	r3, [fp, #-12]
+    808c:	e0822003 	add	r2, r2, r3
+    8090:	e51b3010 	ldr	r3, [fp, #-16]
+    8094:	e0822003 	add	r2, r2, r3
+    8098:	e51b3014 	ldr	r3, [fp, #-20]	; 0xffffffec
+    809c:	e0822003 	add	r2, r2, r3
+    80a0:	e51b3018 	ldr	r3, [fp, #-24]	; 0xffffffe8
+    80a4:	e0822003 	add	r2, r2, r3
+    80a8:	e51b301c 	ldr	r3, [fp, #-28]	; 0xffffffe4
+    80ac:	e0822003 	add	r2, r2, r3
+    80b0:	e51b3020 	ldr	r3, [fp, #-32]	; 0xffffffe0
+    80b4:	e0822003 	add	r2, r2, r3
+    80b8:	e51b3024 	ldr	r3, [fp, #-36]	; 0xffffffdc
+    80bc:	e0822003 	add	r2, r2, r3
+    80c0:	e51b3028 	ldr	r3, [fp, #-40]	; 0xffffffd8
+    80c4:	e0822003 	add	r2, r2, r3
+    80c8:	e51b302c 	ldr	r3, [fp, #-44]	; 0xffffffd4
+    80cc:	e0822003 	add	r2, r2, r3
+    80d0:	e51b3030 	ldr	r3, [fp, #-48]	; 0xffffffd0
+    80d4:	e0822003 	add	r2, r2, r3
+    80d8:	e51b3034 	ldr	r3, [fp, #-52]	; 0xffffffcc
+    80dc:	e0822003 	add	r2, r2, r3
+    80e0:	e51b3038 	ldr	r3, [fp, #-56]	; 0xffffffc8
+    80e4:	e0822003 	add	r2, r2, r3
+    80e8:	e51b304c 	ldr	r3, [fp, #-76]	; 0xffffffb4
+    80ec:	e0822003 	add	r2, r2, r3
+    80f0:	e59b3004 	ldr	r3, [fp, #4]
+    80f4:	e0822003 	add	r2, r2, r3
+    80f8:	e59b3008 	ldr	r3, [fp, #8]
+    80fc:	e0822003 	add	r2, r2, r3
+    8100:	e51b3048 	ldr	r3, [fp, #-72]	; 0xffffffb8
+    8104:	e0822003 	add	r2, r2, r3
+    8108:	e51b3044 	ldr	r3, [fp, #-68]	; 0xffffffbc
+    810c:	e0822003 	add	r2, r2, r3
+    8110:	e51b3040 	ldr	r3, [fp, #-64]	; 0xffffffc0
+    8114:	e0823003 	add	r3, r2, r3
+    8118:	e50b303c 	str	r3, [fp, #-60]	; 0xffffffc4
+    811c:	e51b303c 	ldr	r3, [fp, #-60]	; 0xffffffc4
+    8120:	e1a00003 	mov	r0, r3
+    8124:	e28bd000 	add	sp, fp, #0
+    8128:	e8bd0800 	pop	{fp}
+    812c:	e12fff1e 	bx	lr
+
+00008130 <main>:
+    8130:	e92d4800 	push	{fp, lr}
+    8134:	e28db004 	add	fp, sp, #4
+    8138:	e24dd010 	sub	sp, sp, #16
+    813c:	e3a03032 	mov	r3, #50	; 0x32
+    8140:	e58d3000 	str	r3, [sp]
+    8144:	e3a0303c 	mov	r3, #60	; 0x3c
+    8148:	e58d3004 	str	r3, [sp, #4]
+    814c:	e3a0000a 	mov	r0, #10
+    8150:	e3a01014 	mov	r1, #20
+    8154:	e3a0201e 	mov	r2, #30
+    8158:	e3a03028 	mov	r3, #40	; 0x28
+    815c:	ebffffa7 	bl	8000 <sub>
+    8160:	e50b0008 	str	r0, [fp, #-8]
+    8164:	ef000011 	svc	0x00000011
+    8168:	e1a00003 	mov	r0, r3
+    816c:	e24bd004 	sub	sp, fp, #4
+    8170:	e8bd4800 	pop	{fp, lr}
+    8174:	e12fff1e 	bx	lr
