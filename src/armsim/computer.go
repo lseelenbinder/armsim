@@ -173,6 +173,8 @@ func (c *Computer) Status() (status ComputerStatus) {
 // signifying if the cycle was completed (a cycle will not complete if the
 // instrution fetched is 0x0).
 func (c *Computer) Step() (status bool) {
+	// For trace
+	pc, _ := c.cpu.FetchRegister(PC)
 	instructionBits := c.cpu.Fetch()
 
 	// Don't continue if the instruction is useless
@@ -183,9 +185,11 @@ func (c *Computer) Step() (status bool) {
 	instruction := c.cpu.Decode(instructionBits)
 	status = c.cpu.Execute(instruction)
 
+	// Write trace
 	if c.traceFile != nil {
-		c.traceFile.WriteString(c.Trace() + "\n")
+		c.traceFile.WriteString(c.Trace(pc) + "\n")
 	}
+
 	// Increment step counter
 	c.step_counter++
 	if !status {
@@ -199,9 +203,7 @@ func (c *Computer) Step() (status bool) {
 //
 // Returns:
 //  string contining trace output
-func (c *Computer) Trace() (output string) {
-	program_counter, _ := c.registers.ReadWord(PC)
-
+func (c *Computer) Trace(program_counter uint32) (output string) {
 	// Build Flags int
 	cpsr, _ := c.cpu.FetchRegister(CPSR)
 	flags := ExtractShiftBits(cpsr, V, 32)

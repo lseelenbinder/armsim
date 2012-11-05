@@ -76,7 +76,7 @@ func (bi *baseInstruction) BuildFromBase() (instruction Instruction) {
 	// Check type of instruction and call proper decode method
 	switch bi.Type {
 	case 0x0, 0x1:
-		bi.log.Printf("Data Processing Instruction")
+		bi.log.Printf("Data Processing")
 		instruction = new(dataInstruction)
 	case 0x2:
 		bi.log.Printf("Load/Store: Immediate Offset")
@@ -94,7 +94,7 @@ func (bi *baseInstruction) BuildFromBase() (instruction Instruction) {
 		bi.log.Printf("Software Interrupt")
 		instruction = new(swiInstruction)
 	default:
-		bi.log.Printf("Unknown Instruction")
+		bi.log.Printf("Unknown")
 		instruction = new(unimplementedInstruction)
 	}
 
@@ -178,11 +178,14 @@ func (di *dataInstruction) decode(base *baseInstruction) {
 func (di *dataInstruction) Execute() (status bool) {
 	di.log.SetPrefix("Data Instruction (Execute): ")
 
+	if !ConditionPassed(di.baseInstruction) {
+		return true
+	}
+
 	shifter_operand := di.shifter.Shift()
 	rn, _ := di.cpu.FetchRegisterFromInstruction(di.Rn)
 
 	// Ascertain specific instruction
-
 	switch di.Opcode {
 	case MOV, MNV:
 		// Negate for MNV
@@ -351,6 +354,10 @@ func (lsi *loadStoreInstruction) decode(base *baseInstruction) {
 //  status - a boolean that determines if the CPU continues after this
 //  instruction
 func (lsi *loadStoreInstruction) Execute() (status bool) {
+	if !ConditionPassed(lsi.baseInstruction) {
+		return true
+	}
+
 	var address, base, offset, data uint32
 	var data8 byte
 
@@ -516,6 +523,9 @@ func (lsi *loadStoreMultipleInstruction) decode(base *baseInstruction) {
 //  status - a boolean that determines if the CPU continues after this
 //  instruction
 func (lsi *loadStoreMultipleInstruction) Execute() (status bool) {
+	if !ConditionPassed(lsi.baseInstruction) {
+		return true
+	}
 	var address, start_address, end_address, data uint32
 	Rn, _ := lsi.cpu.FetchRegisterFromInstruction(lsi.Rn)
 
@@ -624,20 +634,7 @@ type branchInstruction struct {
 	L bool
 
 	// Offset bits
-	Offset uint32
-}
-
-// Executes a branch instruction
-//
-// Parameters:
-//  ram - a pointer to a block of memory, presumably ram
-//  registers - a pointer to a block of memory, presumably a register bank
-//
-// Returns:
-//  err - an error
-func (bi *branchInstruction) Execute() (status bool) {
-	// Stub
-	return true
+	Offset int32
 }
 
 // Decodes a branch instruction
@@ -647,8 +644,47 @@ func (bi *branchInstruction) Execute() (status bool) {
 //
 // Returns: None
 func (bi *branchInstruction) decode(base *baseInstruction) {
-	// Stub
+	bi.baseInstruction = base
+	bi.log.SetPrefix("Branch Instruction (Decode): ")
+
+	// Link bit
+	bi.L = ExtractShiftBits(bi.InstructionBits, 24, 25) == 1
+	bi.log.Printf("L bit: %01t", bi.L)
+
+	// Offset is a 24-bit signed number, I need to sign extend to 30 and then then multiply by 4
+	bi.Offset = int32(ExtractBits(bi.InstructionBits, 0, 24) << 8) >> 6 << 4
+	bi.log.Printf("Offset: %d", bi.Offset)
+
 	return
+}
+
+// Executes a branch instruction
+//
+// Parameters: None
+//
+// Returns:
+//  status - a boolean that determins if the CPU continues after this
+//  instruction
+func (bi *branchInstruction) Execute() (status bool) {
+	bi.log.SetPrefix("Branch Instruction (Execute): ")
+
+	// Check condition
+	if !ConditionPassed(bi.baseInstruction) {
+		// Don't continue execution
+		return true
+	}
+
+	if bi.L {
+		pc, _ := bi.cpu.FetchRegister(PC)
+		bi.cpu.WriteRegister(LR, pc - 4)
+	}
+
+	pc, _ := bi.cpu.FetchRegister(PC)
+	newPC := uint32(int32(pc) + bi.Offset)
+	bi.log.Printf("Branching to %X...", newPC)
+	bi.cpu.WriteRegister(PC, newPC)
+
+	return true
 }
 
 // Builds an assembly string representing the instruction.
@@ -658,17 +694,19 @@ func (bi *branchInstruction) Disassemble() (assembly string) { return }
 
 // Holds values typical to Software Interrupt instructions.
 type swiInstruction struct {
+	*baseInstruction // Embed a general instruction
 	Data uint32
 }
 
-// Decodes a interrupt instruction
+// Decodes an interrupt instruction
 //
 // Parameters:
 //  base - a generic instruction containing most information
 //
 // Returns: None
 func (swi *swiInstruction) decode(base *baseInstruction) {
-	// I don't even really need this data, but the OS might.
+	swi.baseInstruction = base
+
 	swi.Data = ExtractBits(base.InstructionBits, 0, 25)
 	return
 }
@@ -681,6 +719,10 @@ func (swi *swiInstruction) decode(base *baseInstruction) {
 //  status - a boolean that determines in the CPU statuss after this
 //  instruction
 func (si *swiInstruction) Execute() (status bool) {
+	if !ConditionPassed(si.baseInstruction) {
+		return true
+	}
+
 	// All SWI instructions immediately stop execution at this point
 	return false
 }
@@ -693,17 +735,115 @@ func (swi *swiInstruction) Disassemble() (assembly string) {
 }
 
 // Stub class to fake unknown or unimplemented instructions
-type unimplementedInstruction struct{}
+type unimplementedInstruction struct {
+	*baseInstruction
+}
 
 // Stub method to fake execution of unimplemented instructions
 func (ui *unimplementedInstruction) Execute() (status bool) {
+	if !ConditionPassed(ui.baseInstruction) {
+		return true
+	}
+
 	return true
 }
 
 // Stub method to fake decoding of unimplemented instructions
 func (ui *unimplementedInstruction) decode(base *baseInstruction) {
+	ui.baseInstruction = base
 	return
 }
 
 // Stub method to fake disassemble of unimplemented instructions
 func (ui *unimplementedInstruction) Disassemble() (assembly string) { return "unk" }
+
+// Conditions
+const (
+	EQ = iota // Equal
+	NE // Not equal
+	CS // Carry set / unsigned higher or same
+	CC // Carry clear/unsigned lower
+	MI // Minus/negative
+	PL // Plus/positive or zero
+	VS // Overflow
+	VC // No overflow
+	HI // Unsigned higher
+	LS // Unsigned lower or same
+	GE // Signed greater than or equal
+	LT // Signed less than
+	GT // Signed greater than
+	LE // Signed less than or equal
+	AL // Always (unconditional)
+	UNP // Unpredictable
+)
+
+// Condition Passed, implements the logic to test the flags for conditional execution
+//
+// Parameters:
+//  bi - the baseInstruction that contains condition codes and other necessary
+//  information
+//
+// Returns:
+//  passed - a bool, true if the condition passed, otherwise false
+func ConditionPassed(bi *baseInstruction) (passed bool) {
+	// Fetch flags
+	z, _ := bi.cpu.registers.TestFlag(CPSR, Z)
+	c, _ := bi.cpu.registers.TestFlag(CPSR, C)
+	n, _ := bi.cpu.registers.TestFlag(CPSR, N)
+	v, _ := bi.cpu.registers.TestFlag(CPSR, V)
+
+	switch bi.CondCode {
+	case EQ:
+		// Z == 1
+		passed = z
+	case NE:
+		// Z == 0
+		passed = !z
+	case CS:
+		// C == 1
+		passed = c
+	case CC:
+		// C == 0
+		passed = !c
+	case MI:
+		// N == 1
+		passed = n
+	case PL:
+		// N == 0
+		passed = !n
+	case VS:
+		// V == 1
+		passed = v
+	case VC:
+		// V == 0
+		passed = !v
+	case HI:
+		// C set and Z clear
+		passed = c && !z
+	case LS:
+		// C clear or Z set
+		passed = !c || z
+	case GE:
+		// N == V
+		passed = n == v
+	case LT:
+		// N != V
+		passed = n != v
+	case GT:
+		// Z == 0 and N == V
+		passed = !z && n == v
+	case LE:
+		// Z == 1 or N != V
+		passed = z || n != v
+	case AL:
+		// Always
+		passed = true
+	case UNP:
+		bi.log.Printf("Unpredictable condition code...ignoring.")
+		passed = true
+	default:
+		passed = true
+	}
+
+	return
+}
