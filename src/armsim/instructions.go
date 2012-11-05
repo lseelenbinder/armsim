@@ -76,8 +76,14 @@ func (bi *baseInstruction) BuildFromBase() (instruction Instruction) {
 	// Check type of instruction and call proper decode method
 	switch bi.Type {
 	case 0x0, 0x1:
-		bi.log.Printf("Data Processing")
-		instruction = new(dataInstruction)
+		// Check for BX
+		if !(ExtractShiftBits(bi.InstructionBits, 21, 25) == 0x9) {
+			bi.log.Printf("Data Processing")
+			instruction = new(dataInstruction)
+		} else {
+			bi.log.Printf("Branch (BX)")
+			instruction = new(branchInstruction)
+		}
 	case 0x2:
 		bi.log.Printf("Load/Store: Immediate Offset")
 		instruction = new(loadStoreInstruction)
@@ -275,6 +281,8 @@ func (di *dataInstruction) Disassemble() (assembly string) {
 		assembly += "unk"
 	}
 
+	assembly += ConditionMnemonic(di.CondCode)
+
 	if di.Opcode == MUL {
 		// Handle this special case
 		assembly += fmt.Sprintf(" r%d, r%d, r%d", di.Rn, di.shifter.Rn, di.shifter.Rs)
@@ -434,6 +442,8 @@ func (lsi *loadStoreInstruction) Disassemble() (assembly string) {
 	if lsi.B {
 		mnemonic += "b"
 	}
+
+	mnemonic += ConditionMnemonic(lsi.CondCode)
 
 	if !lsi.I {
 		shift = fmt.Sprintf("#%d", lsi.offset12)
@@ -599,6 +609,8 @@ func (lsi *loadStoreMultipleInstruction) Disassemble() (assembly string) {
 		}
 	}
 
+	mnemonic += ConditionMnemonic(lsi.CondCode)
+
 	for i := 0; i < 16; i++ {
 		if lsi.registerList[i] {
 			registers += fmt.Sprintf("r%d ", i)
@@ -630,8 +642,14 @@ type branchInstruction struct {
 	// Embedding a general instruction
 	*baseInstruction
 
+	// BX
+	bx bool
+
 	// L bit
 	L bool
+
+	// Rm (for BX)
+	Rm uint32
 
 	// Offset bits
 	Offset int32
@@ -647,13 +665,29 @@ func (bi *branchInstruction) decode(base *baseInstruction) {
 	bi.baseInstruction = base
 	bi.log.SetPrefix("Branch Instruction (Decode): ")
 
-	// Link bit
-	bi.L = ExtractShiftBits(bi.InstructionBits, 24, 25) == 1
-	bi.log.Printf("L bit: %01t", bi.L)
+	// Check for BX
+	if bi.Type == 0x5 {
+		// B or BL
+		bi.bx = false
 
-	// Offset is a 24-bit signed number, I need to sign extend to 30 and then then multiply by 4
-	bi.Offset = int32(ExtractBits(bi.InstructionBits, 0, 24) << 8) >> 6 << 4
-	bi.log.Printf("Offset: %d", bi.Offset)
+		// Link bit
+		bi.L = ExtractShiftBits(bi.InstructionBits, 24, 25) == 1
+		bi.log.Printf("L bit: %01t", bi.L)
+
+		// Offset is a 24-bit signed number, I need to sign extend to 30 and then then multiply by 4
+		bi.Offset = int32(ExtractBits(bi.InstructionBits, 0, 24)<<8) >> 6 << 4
+		bi.log.Printf("Offset: %d", bi.Offset)
+	} else {
+		// BX
+		bi.bx = true
+
+		// Set L bit
+		bi.L = false
+
+		// Rm
+		bi.Rm = ExtractShiftBits(bi.InstructionBits, 0, 4)
+		bi.log.Printf("Rm: %d", bi.Rm)
+	}
 
 	return
 }
@@ -676,11 +710,20 @@ func (bi *branchInstruction) Execute() (status bool) {
 
 	if bi.L {
 		pc, _ := bi.cpu.FetchRegister(PC)
-		bi.cpu.WriteRegister(LR, pc - 4)
+		bi.cpu.WriteRegister(LR, pc-4)
 	}
 
-	pc, _ := bi.cpu.FetchRegister(PC)
-	newPC := uint32(int32(pc) + bi.Offset)
+	// Check for BX
+	var newPC uint32
+	if !bi.bx {
+		// B or BL
+		pc, _ := bi.cpu.FetchRegister(PC)
+		newPC = uint32(int32(pc) + bi.Offset)
+	} else {
+		newPC, _ = bi.cpu.FetchRegisterFromInstruction(bi.Rm)
+		newPC &= 0xFFFFFFFE
+	}
+
 	bi.log.Printf("Branching to %X...", newPC)
 	bi.cpu.WriteRegister(PC, newPC)
 
@@ -690,12 +733,26 @@ func (bi *branchInstruction) Execute() (status bool) {
 // Builds an assembly string representing the instruction.
 //
 // Returns a string containing the mnemonic and related arguments.
-func (bi *branchInstruction) Disassemble() (assembly string) { return }
+func (bi *branchInstruction) Disassemble() (assembly string) {
+	if !bi.bx {
+		assembly += "b"
+	} else {
+		assembly += "bx"
+	}
+
+	if bi.L {
+		assembly += "l"
+	}
+
+	assembly += ConditionMnemonic(bi.CondCode)
+
+	return
+}
 
 // Holds values typical to Software Interrupt instructions.
 type swiInstruction struct {
 	*baseInstruction // Embed a general instruction
-	Data uint32
+	Data             uint32
 }
 
 // Decodes an interrupt instruction
@@ -759,25 +816,25 @@ func (ui *unimplementedInstruction) Disassemble() (assembly string) { return "un
 
 // Conditions
 const (
-	EQ = iota // Equal
-	NE // Not equal
-	CS // Carry set / unsigned higher or same
-	CC // Carry clear/unsigned lower
-	MI // Minus/negative
-	PL // Plus/positive or zero
-	VS // Overflow
-	VC // No overflow
-	HI // Unsigned higher
-	LS // Unsigned lower or same
-	GE // Signed greater than or equal
-	LT // Signed less than
-	GT // Signed greater than
-	LE // Signed less than or equal
-	AL // Always (unconditional)
-	UNP // Unpredictable
+	EQ  = iota // Equal
+	NE         // Not equal
+	CS         // Carry set / unsigned higher or same
+	CC         // Carry clear/unsigned lower
+	MI         // Minus/negative
+	PL         // Plus/positive or zero
+	VS         // Overflow
+	VC         // No overflow
+	HI         // Unsigned higher
+	LS         // Unsigned lower or same
+	GE         // Signed greater than or equal
+	LT         // Signed less than
+	GT         // Signed greater than
+	LE         // Signed less than or equal
+	AL         // Always (unconditional)
+	UNP        // Unpredictable
 )
 
-// Condition Passed, implements the logic to test the flags for conditional execution
+// Condition Passed implements the logic to test the flags for conditional execution
 //
 // Parameters:
 //  bi - the baseInstruction that contains condition codes and other necessary
@@ -843,6 +900,42 @@ func ConditionPassed(bi *baseInstruction) (passed bool) {
 		passed = true
 	default:
 		passed = true
+	}
+
+	return
+}
+
+// Condition Mnemonic returns the approriate mnemonic for a condition code
+func ConditionMnemonic(cond uint32) (m string) {
+	switch cond {
+	case EQ:
+		m = "eq"
+	case NE:
+		m = "ne"
+	case CS:
+		m = "cs"
+	case CC:
+		m = "cc"
+	case MI:
+		m = "mi"
+	case PL:
+		m = "pl"
+	case VS:
+		m = "vs"
+	case VC:
+		m = "vc"
+	case HI:
+		m = "hi"
+	case LS:
+		m = "ls"
+	case GE:
+		m = "ge"
+	case LT:
+		m = "lt"
+	case LE:
+		m = "le"
+	case AL, UNP:
+		m = ""
 	}
 
 	return
