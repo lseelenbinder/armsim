@@ -674,8 +674,9 @@ func (bi *branchInstruction) decode(base *baseInstruction) {
 		bi.L = ExtractShiftBits(bi.InstructionBits, 24, 25) == 1
 		bi.log.Printf("L bit: %01t", bi.L)
 
-		// Offset is a 24-bit signed number, I need to sign extend to 30 and then then multiply by 4
-		bi.Offset = int32(ExtractBits(bi.InstructionBits, 0, 24)<<8) >> 6 << 4
+		// Offset is a 24-bit signed number, I need to sign extend to 32 and then
+		// shift right 6 places (to account for multiplication by 4)
+		bi.Offset = int32(ExtractBits(bi.InstructionBits, 0, 24)<<8) >> 6
 		bi.log.Printf("Offset: %d", bi.Offset)
 	} else {
 		// BX
@@ -734,17 +735,25 @@ func (bi *branchInstruction) Execute() (status bool) {
 //
 // Returns a string containing the mnemonic and related arguments.
 func (bi *branchInstruction) Disassemble() (assembly string) {
-	if !bi.bx {
-		assembly += "b"
-	} else {
-		assembly += "bx"
-	}
+	assembly = "b"
 
+	if bi.bx {
+		assembly += "x"
+	}
 	if bi.L {
 		assembly += "l"
 	}
 
 	assembly += ConditionMnemonic(bi.CondCode)
+
+	if bi.bx {
+		assembly += fmt.Sprintf(" r%d", bi.Rm)
+	} else {
+		// TODO: This will not be correct out-of-context
+		pc, _ := bi.cpu.FetchRegister(PC)
+		newPC := uint32(int32(pc) + bi.Offset)
+		assembly += fmt.Sprintf(" #%X", newPC)
+	}
 
 	return
 }
