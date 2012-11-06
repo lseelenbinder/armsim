@@ -4,21 +4,14 @@
 package armsim
 
 import (
+	"fmt"
 	"io"
 	"log"
 	"os"
-	"fmt"
 )
 
 // Registers
 const (
-	// Note: In a normal ARM architecture, there would be 32 registers. Two
-	// 15-place banks, a CPSR, and a SPSR. In this implementation, the dual
-	// "normal" register banks are not implemented, nor is the SPSR implemented.
-
-	// iota is an enumerator that returns 0, 1, 2, ..., on successive calls.
-	// Each consecutive constant is assumed to be equal to the previous constant;
-	// however, because of iota this means they are created correctly.
 	r0 uint32 = 4 * iota
 	r1
 	r2
@@ -35,11 +28,22 @@ const (
 	r13
 	r14
 	r15
-	r16
-	SP = r13 // Stack Pointer
-	LR = r14 // Link Register
-	PC = r15 // Program Counter
-	CPSR = r16 // Current Program Status (N, Z, C, V or F flags)
+	CPSR // Current Program Status (N, Z, C, V or F flags)
+	SPSR // Saved Program Status
+
+	r13_svc  // Banked r13 for Supervisor
+	r14_svc  // Banked r14 for Supervisor
+	r13_irq  // Banked r13 for IRQ
+	r14_irq  // Banked r14 for IRQ
+	SPSR_svc // SPSR for Supervisor
+	SPSR_irq // SPSR for IRQ
+
+	SP     = r13     // Stack Pointer
+	SP_irq = r13_irq // Stack Pointer (IRQ mode)
+	SP_svc = r13_svc // Stack Pointer (Supervisor mode)
+	LR     = r14     // Link Register
+	PC     = r15     // Program Counter
+
 )
 
 // Flags
@@ -52,6 +56,15 @@ const (
 	F = V                // Overflow Flag (alternative spelling)
 )
 
+// Modes
+const (
+	User       = iota + 0x10 // PC, R14 to R0, CPSR
+	_                        // FIQ (Not implemented)
+	IRQ                      // PC, R14_irq, R13_irq, R12 to R0, CPSR, SPSR_irq
+	Supervisor               // PC, R14_svc, R13_svc, R12 to R0, CPSR, SPSR_svc
+	System     = 0x1F        // PC, R14 to R0, CPSR
+)
+
 // A CPU holds references for RAM and registers a CPU needs to function.
 type CPU struct {
 	// A reference to the assigned memory bank
@@ -61,10 +74,10 @@ type CPU struct {
 	registers *Memory
 
 	// A reference to the Keyboard (since we don't have a true bus)
-	keyboard <-chan rune
+	keyboard chan byte
 
 	// A reference to the Console (since we don't have a true bus)
-	console chan<- rune
+	console chan byte
 
 	// Logging class
 	log    *log.Logger
@@ -80,8 +93,8 @@ type CPU struct {
 //
 // Returns:
 //  a pointer to the newly created CPU
-func NewCPU(ram *Memory, registers *Memory, keyboard <-chan rune,
-						console chan<- rune, logOut io.Writer) (cpu *CPU) {
+func NewCPU(ram *Memory, registers *Memory, keyboard chan byte,
+	console chan byte, logOut io.Writer) (cpu *CPU) {
 	cpu = new(CPU)
 
 	if logOut == nil {
@@ -161,7 +174,7 @@ func (cpu *CPU) Execute(i Instruction) (status bool) {
 // Returns:
 //  value - the register's content
 func (cpu *CPU) FetchRegister(r uint32) (value uint32, err error) {
-	value, err = cpu.registers.ReadWord(r)
+	value, err = cpu.registers.ReadWord(cpu.bankedRegister(r))
 
 	// Because of pipelining, any PC access will need to be +8. However, the PC is already
 	// incremented, so it will only be +4.
@@ -186,7 +199,7 @@ func (cpu *CPU) FetchRegisterFromInstruction(r uint32) (value uint32, err error)
 // Returns:
 //  err - any error that may have occured
 func (cpu *CPU) WriteRegister(r, data uint32) (err error) {
-	return cpu.registers.WriteWord(r, data)
+	return cpu.registers.WriteWord(cpu.bankedRegister(r), data)
 }
 
 // Wraps WriteRegister to allow it to use register index value obtained from an instruction.
@@ -204,7 +217,17 @@ func (cpu *CPU) WriteRegisterFromInstruction(r, data uint32) (err error) {
 // Returns:
 //  err - any error that may have occurred
 func (c *CPU) WriteOutByte(address uint32, data byte) (err error) {
-	return c.ram.WriteByte(address, data)
+	if address == 0x100001 {
+		c.log.Printf("ERROR: Attempted to write to keyboard...")
+	} else if !(address == 0x100000) {
+		err = c.ram.WriteByte(address, data)
+	} else {
+		// add byte to console buffer
+		c.console <- data
+		fmt.Printf("Output \"%c\" to console\n", data)
+		_ = <-c.console
+	}
+	return
 }
 
 // Wraps Memory.ReadByte to allow for memory-mapped IO
@@ -216,7 +239,18 @@ func (c *CPU) WriteOutByte(address uint32, data byte) (err error) {
 //  data - byte of data at address
 //  err - any error that may have occurred
 func (c *CPU) ReadInByte(address uint32) (data byte, err error) {
-	return c.ram.ReadByte(address)
+	if address == 0x100000 {
+		c.log.Printf("ERROR: Attempted to read from console...")
+		return
+	} else if !(address == 0x100001) {
+		data, err = c.ram.ReadByte(address)
+	} else {
+		// read char from keyboard
+		data = byte(<-c.keyboard)
+		c.log.Printf("Read \"%s\" from keyboard", data)
+	}
+
+	return
 }
 
 // Wraps Memory.WriteWord to allow for memory-mapped IO
@@ -228,13 +262,13 @@ func (c *CPU) ReadInByte(address uint32) (data byte, err error) {
 // Returns:
 //  err - any error that may have occurred
 func (c *CPU) WriteOutWord(address, data uint32) (err error) {
-	if (address == 0x100001) {
+	if address == 0x100001 {
 		c.log.Printf("ERROR: Attempted to write to keyboard...")
 	} else if !(address == 0x100000) {
 		err = c.ram.WriteWord(address, data)
 	} else {
-		// add rune to keyboard buffer
-		c.console <- rune(data)
+		// add byte to keyboard buffer
+		c.console <- byte(data)
 		fmt.Printf("Output \"%U\" to console", data)
 	}
 	return
@@ -249,16 +283,42 @@ func (c *CPU) WriteOutWord(address, data uint32) (err error) {
 //  data - word of data at address
 //  err - any error that may have occurred
 func (c *CPU) ReadInWord(address uint32) (data uint32, err error) {
-	if (address == 0x100000) {
+	if address == 0x100000 {
 		c.log.Printf("ERROR: Attempted to read from console...")
 		return
 	} else if !(address == 0x100001) {
 		data, err = c.ram.ReadWord(address)
 	} else {
 		// read char from keyboard
-		data = uint32(<- c.keyboard)
+		data = uint32(<-c.keyboard)
 		c.log.Printf("Read \"%U\" from keyboard", data)
 	}
 
 	return
+}
+
+// Banked register locations
+//
+// Parameters:
+//  r - a register
+//
+// Returns:
+//	actualR - proper address for the register based on mode
+func (cpu *CPU) bankedRegister(r uint32) (actualR uint32) {
+	// Check for banked register
+	if r == r13 || r == r14 || r == SPSR {
+		cpsr, _ := cpu.FetchRegister(CPSR)
+		mode := ExtractBits(cpsr, 0, 5)
+
+		switch mode {
+		case Supervisor:
+			r += 5 << 2
+			cpu.log.Printf("Using banked supervisor register %d...", r)
+		case IRQ:
+			cpu.log.Printf("Using banked IRQ register %d...", r)
+			r += 7 << 2
+		}
+	}
+
+	return r
 }

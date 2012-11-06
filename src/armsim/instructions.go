@@ -175,9 +175,7 @@ func (di *dataInstruction) decode(base *baseInstruction) {
 
 // Executes a data instruction
 //
-// Parameters:
-//  ram - a pointer to a block of memory, presumably ram
-//  registers - a pointer to a block of memory, presumably a register bank
+// Parameters: None
 //
 // Returns:
 //  err - an error
@@ -199,6 +197,14 @@ func (di *dataInstruction) Execute() (status bool) {
 			shifter_operand ^= 0xFFFFFFFF
 		}
 		di.cpu.WriteRegisterFromInstruction(di.Rd, shifter_operand)
+
+		if di.S {
+			// MOVS for r15
+			spsr, _ := di.cpu.FetchRegister(SPSR)
+			di.log.Printf("New CPSR: %b", spsr)
+			di.cpu.WriteRegister(CPSR, spsr)
+		}
+
 	case ADD:
 		// Rd = Rn + shifter_operand
 		di.cpu.WriteRegisterFromInstruction(di.Rd, rn+shifter_operand)
@@ -279,6 +285,10 @@ func (di *dataInstruction) Disassemble() (assembly string) {
 		assembly += "cmp"
 	default:
 		assembly += "unk"
+	}
+
+	if di.S && di.Opcode != CMP {
+		assembly += "s"
 	}
 
 	assembly += ConditionMnemonic(di.CondCode)
@@ -785,13 +795,31 @@ func (swi *swiInstruction) decode(base *baseInstruction) {
 // Returns:
 //  status - a boolean that determines in the CPU statuss after this
 //  instruction
-func (si *swiInstruction) Execute() (status bool) {
-	if !ConditionPassed(si.baseInstruction) {
+func (swi *swiInstruction) Execute() (status bool) {
+	if !ConditionPassed(swi.baseInstruction) {
 		return true
 	}
 
-	// All SWI instructions immediately stop execution at this point
-	return false
+	// Set r14_svc
+	pc, _ := swi.cpu.FetchRegister(PC)
+	swi.cpu.WriteRegister(r14_svc, pc-4)
+
+	// Set SPSR_svc
+	cpsr, _ := swi.cpu.FetchRegister(CPSR)
+	swi.cpu.WriteRegister(SPSR_svc, cpsr)
+
+	// Set mode bits
+	cpsr &= 0xFFFFFFE0
+	cpsr |= Supervisor
+
+	// Set CPSR
+	swi.cpu.WriteRegister(CPSR, cpsr)
+	swi.log.Printf("New CPSR: %032b", cpsr)
+
+	// Set PC
+	swi.cpu.WriteRegister(PC, 0x8)
+
+	return true
 }
 
 // Builds an assembly string representing the instruction.

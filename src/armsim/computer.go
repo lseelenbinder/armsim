@@ -37,10 +37,10 @@ type Computer struct {
 	// Trace Log File
 	traceFile *os.File
 
-	// Keyboard buffer (supports full unicode)
-	Keyboard <-chan rune
-	// Console buffer (supports full unicode)
-	Console chan<- rune
+	// Keyboard buffer
+	Keyboard chan byte
+	// Console buffer
+	Console chan byte
 }
 
 // A ComputerStatus is an individual module designed to make it easy to pass
@@ -77,12 +77,13 @@ func NewComputer(memSize uint32, logOut io.Writer) (c *Computer) {
 	c.memSize = memSize
 	c.ram = NewMemory(memSize, logOut)
 
-	// Initialize a register bank to contain all 16 registers + CPSR
-	c.registers = NewMemory(CPSR+4, logOut)
+	// Initialize a register bank to contain all 16 registers + CPSR + Banked
+	// registers
+	c.registers = NewMemory(SPSR_irq+4, logOut)
 
 	// Initialize buffers
-	c.Keyboard = make(<-chan rune, 100)
-	c.Console = make(chan<- rune, 100)
+	c.Keyboard = make(chan byte, 100)
+	c.Console = make(chan byte, 100)
 
 	// Initialize CPU with RAM and registers
 	c.cpu = NewCPU(c.ram, c.registers, c.Keyboard, c.Console, logOut)
@@ -220,7 +221,7 @@ func (c *Computer) Trace(program_counter uint32) (output string) {
 	output = fmt.Sprintf("%06d %08X %08X %04b\t", c.step_counter, program_counter-4,
 		c.ram.Checksum(), flags)
 	for i := 0; i < 15; i++ {
-		reg, _ := c.registers.ReadWord(uint32(i * 4))
+		reg, _ := c.cpu.FetchRegister(uint32(i * 4))
 		output += fmt.Sprintf("%2d=%08X", i, reg)
 		if i == 3 || i == 9 {
 			output += "\n\t"
@@ -248,9 +249,6 @@ func (c *Computer) LoadELF(filePath string) (err error) {
 
 	// Get a clean system
 	c.Reset()
-
-	// Set SP
-	c.cpu.WriteRegister(SP, 0x7000)
 
 	// Setup Logging
 	defer c.log.SetPrefix(c.log.Prefix())
@@ -374,13 +372,21 @@ func (c *Computer) Reset() {
 		c.ram.WriteWord(uint32(i), 0x0)
 	}
 
-	for i := 0; uint32(i) < (CPSR + 4); i += 4 {
+	for i := 0; uint32(i) < (SPSR_irq + 4); i += 4 {
 		c.registers.WriteWord(uint32(i), 0x0)
 	}
 
 	if c.traceFile != nil {
 		c.EnableTracing()
 	}
+
+	// Set SPs
+	c.cpu.WriteRegister(SP, 0x7000)
+	c.cpu.WriteRegister(SP_irq, 0x7FF0)
+	c.cpu.WriteRegister(SP_svc, 0x78F0)
+
+	// Set mode
+	c.cpu.WriteRegister(CPSR, 0x1F)
 
 	c.step_counter = 1
 }
