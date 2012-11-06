@@ -405,10 +405,10 @@ func (lsi *loadStoreInstruction) Execute() (status bool) {
 			// Byte
 			data8 = byte(data)
 			// Write to memory
-			lsi.cpu.ram.WriteByte(address, data8)
+			lsi.cpu.WriteOutByte(address, data8)
 		} else {
 			// Write to memory
-			lsi.cpu.ram.WriteWord(address, data)
+			lsi.cpu.WriteOutWord(address, data)
 		}
 	}
 
@@ -566,11 +566,11 @@ func (lsi *loadStoreMultipleInstruction) Execute() (status bool) {
 	for i := 0; i < 16; i++ {
 		if lsi.registerList[i] {
 			if lsi.L { // Load
-				data, _ = lsi.cpu.ram.ReadWord(address)
+				data, _ = lsi.cpu.ReadInWord(address)
 				lsi.cpu.WriteRegisterFromInstruction(uint32(i), data)
 			} else { // Store
 				data, _ = lsi.cpu.FetchRegisterFromInstruction(uint32(i))
-				lsi.cpu.ram.WriteWord(address, data)
+				lsi.cpu.WriteOutWord(address, data)
 			}
 			address += 4
 		}

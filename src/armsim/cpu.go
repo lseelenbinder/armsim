@@ -7,6 +7,7 @@ import (
 	"io"
 	"log"
 	"os"
+	"fmt"
 )
 
 // Registers
@@ -35,14 +36,10 @@ const (
 	r14
 	r15
 	r16
-	// Stack Pointer
-	SP = r13
-	// Link Register
-	LR = r14
-	// Program Counter
-	PC = r15
-	// Current Program Status (N, Z, C, V or F flags)
-	CPSR = r16
+	SP = r13 // Stack Pointer
+	LR = r14 // Link Register
+	PC = r15 // Program Counter
+	CPSR = r16 // Current Program Status (N, Z, C, V or F flags)
 )
 
 // Flags
@@ -63,6 +60,12 @@ type CPU struct {
 	// A reference to the assigned registers bank
 	registers *Memory
 
+	// A reference to the Keyboard (since we don't have a true bus)
+	keyboard <-chan rune
+
+	// A reference to the Console (since we don't have a true bus)
+	console chan<- rune
+
 	// Logging class
 	log    *log.Logger
 	logOut io.Writer
@@ -77,7 +80,8 @@ type CPU struct {
 //
 // Returns:
 //  a pointer to the newly created CPU
-func NewCPU(ram *Memory, registers *Memory, logOut io.Writer) (cpu *CPU) {
+func NewCPU(ram *Memory, registers *Memory, keyboard <-chan rune,
+						console chan<- rune, logOut io.Writer) (cpu *CPU) {
 	cpu = new(CPU)
 
 	if logOut == nil {
@@ -94,6 +98,10 @@ func NewCPU(ram *Memory, registers *Memory, logOut io.Writer) (cpu *CPU) {
 	// Assign Registers
 	cpu.registers = registers
 	cpu.log.Println("Assigned registers @", &registers)
+
+	// Assign Keyboard & Console
+	cpu.keyboard = keyboard
+	cpu.console = console
 
 	return
 }
@@ -185,4 +193,72 @@ func (cpu *CPU) WriteRegister(r, data uint32) (err error) {
 // Parameters and return value are the same as WriteRegister.
 func (cpu *CPU) WriteRegisterFromInstruction(r, data uint32) (err error) {
 	return cpu.WriteRegister(r<<2, data)
+}
+
+// Wraps Memory.WriteByte to allow for memory-mapped IO
+//
+// Parameters:
+//  address - 32-bit address of write location in memory
+//  data - byte of data to write
+//
+// Returns:
+//  err - any error that may have occurred
+func (c *CPU) WriteOutByte(address uint32, data byte) (err error) {
+	return c.ram.WriteByte(address, data)
+}
+
+// Wraps Memory.ReadByte to allow for memory-mapped IO
+//
+// Parameters:
+//  address - 32-bit address of read location in memory
+//
+// Returns:
+//  data - byte of data at address
+//  err - any error that may have occurred
+func (c *CPU) ReadInByte(address uint32) (data byte, err error) {
+	return c.ram.ReadByte(address)
+}
+
+// Wraps Memory.WriteWord to allow for memory-mapped IO
+//
+// Parameters:
+//  address - 32-bit address of write location in memory
+//  data - word of data to write
+//
+// Returns:
+//  err - any error that may have occurred
+func (c *CPU) WriteOutWord(address, data uint32) (err error) {
+	if (address == 0x100001) {
+		c.log.Printf("ERROR: Attempted to write to keyboard...")
+	} else if !(address == 0x100000) {
+		err = c.ram.WriteWord(address, data)
+	} else {
+		// add rune to keyboard buffer
+		c.console <- rune(data)
+		fmt.Printf("Output \"%U\" to console", data)
+	}
+	return
+}
+
+// Wraps Memory.ReadWord to allow for memory-mapped IO
+//
+// Parameters:
+//  address - 32-bit address of read location in memory
+//
+// Returns:
+//  data - word of data at address
+//  err - any error that may have occurred
+func (c *CPU) ReadInWord(address uint32) (data uint32, err error) {
+	if (address == 0x100000) {
+		c.log.Printf("ERROR: Attempted to read from console...")
+		return
+	} else if !(address == 0x100001) {
+		data, err = c.ram.ReadWord(address)
+	} else {
+		// read char from keyboard
+		data = uint32(<- c.keyboard)
+		c.log.Printf("Read \"%U\" from keyboard", data)
+	}
+
+	return
 }

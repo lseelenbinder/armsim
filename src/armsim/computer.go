@@ -36,6 +36,11 @@ type Computer struct {
 
 	// Trace Log File
 	traceFile *os.File
+
+	// Keyboard buffer (supports full unicode)
+	Keyboard <-chan rune
+	// Console buffer (supports full unicode)
+	Console chan<- rune
 }
 
 // A ComputerStatus is an individual module designed to make it easy to pass
@@ -75,8 +80,12 @@ func NewComputer(memSize uint32, logOut io.Writer) (c *Computer) {
 	// Initialize a register bank to contain all 16 registers + CPSR
 	c.registers = NewMemory(CPSR+4, logOut)
 
+	// Initialize buffers
+	c.Keyboard = make(<-chan rune, 100)
+	c.Console = make(chan<- rune, 100)
+
 	// Initialize CPU with RAM and registers
-	c.cpu = NewCPU(c.ram, c.registers, logOut)
+	c.cpu = NewCPU(c.ram, c.registers, c.Keyboard, c.Console, logOut)
 
 	// Trace Log File
 	if err := c.EnableTracing(); err != nil {
