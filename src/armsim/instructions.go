@@ -773,7 +773,8 @@ type swiInstruction struct {
 func (swi *swiInstruction) decode(base *baseInstruction) {
 	swi.baseInstruction = base
 
-	swi.Data = ExtractBits(base.InstructionBits, 0, 25)
+	swi.Data = ExtractBits(base.InstructionBits, 0, 24)
+	swi.log.Printf("Immediate 24 bits: %0#x", swi.Data)
 	return
 }
 
