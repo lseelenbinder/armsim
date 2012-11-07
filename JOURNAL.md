@@ -1,7 +1,7 @@
 # ARMSIM Project Journal
   by Luke Seelenbinder
 
-### Total Time: 51.25 hours
+### Total Time: 67.25 hours
 
 ## Preparation (Total time: 2 hours)
 1. Investigate GO as a possibility for the project. (Time: 2 hours)
@@ -149,11 +149,11 @@
 1. Build Instruction Decode and Execution Pathway (Time: 6 hours)
   - Notes:
     - I needed to build a system by which I could take arbitrary instructions and
-      narrow them down quickly and effciently. I ended up building a solution 
-      based on a BaseInstruction class and general classes for each type of 
+      narrow them down quickly and efficiently. I ended up building a solution
+      based on a BaseInstruction class and general classes for each type of
       instruction. By also including a BarrelShifter class, I made handling of
       operand2s very simple.
-    - I found Go's interfaces very intuitive and good for the system I ended up 
+    - I found Go's interfaces very intuitive and good for the system I ended up
       building.
     - Building the BarrelShifter class was difficult, but not nearly as difficult
       as I expected.
@@ -166,6 +166,26 @@
 2. Build Instructions (Total time: 11 hours)
   - Notes:
     - This process was not very difficult (though some instructions proved difficult to get just right).
-    - I found comparison of the trace's output with expected to be a very good way to test, at least initally.
+    - I found comparison of the trace's output with expected to be a very good way to test, at least initially.
     - The sheer amount of information required when programming an instruction is very laborious.
       I can't imagine those that program instruction sets with real hardware.
+
+## Simulator II (Total Time: 16 hours)
+1. Add CMP and Branch instructions (Time: 3 hours)
+  - Notes:
+    - The CMP instruction was simple to implement.
+    - The B, BL, and BX instructions proved a bit more difficult to implement.
+      To parse the instructions was rather difficult, I needed to do some
+      bit-shifting and hacking to get the signed valued of 20-bits to correctly
+      add to the PC. Also, I waffled for a while on whether the BX instruction
+      should be of class BranchInstruction or DataInstruction. I ended up going
+      with BranchInstruction.
+    - Like most of this project, the work itself was not very difficult, just
+      time-consuming.
+2. Implement System Modes, Interrupts, and Memory-Mapped I/O (Time: 13 hours)
+  - Notes:
+    - This was a very difficult portion of the project. The minutiae lends itself
+      to many hidden problems and long hours debugging. I was able to setup
+      most of the framework for the whole system rather easily, but I spent a long
+      time debugging it and making sure everything functioned properly. I spent
+      3 hours debugging a problem caused by two lines of code.
