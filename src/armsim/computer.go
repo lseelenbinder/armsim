@@ -41,12 +41,14 @@ type Computer struct {
 	Keyboard chan byte
 	// Console buffer
 	Console chan byte
+	// IRQ buffer
+	Irq chan bool
 }
 
 // A ComputerStatus is an individual module designed to make it easy to pass
 // status information to external code.
 type ComputerStatus struct {
-	Flags       [4]bool    // CPSR Flags
+	Flags       [5]bool    // CPSR Flags
 	Disassembly []string   // The 2 previous instructions, current instruction, and next 7 instructions
 	Registers   [16]uint32 // A representation of the registers
 	Stack       []uint32   // A representation of the top of the stack
@@ -87,6 +89,7 @@ func NewComputer(memSize uint32, logOut io.Writer) (c *Computer) {
 
 	// Initialize CPU with RAM and registers
 	c.cpu = NewCPU(c.ram, c.registers, c.Keyboard, c.Console, logOut)
+	c.Irq = c.cpu.irq
 
 	// Trace Log File
 	if err := c.EnableTracing(); err != nil {
@@ -103,7 +106,7 @@ func NewComputer(memSize uint32, logOut io.Writer) (c *Computer) {
 // decode cycle until fetch returns false (signifying an instruction of 0x0).
 //
 // Parameters:
-//  haltng - channel to enable midstream halting of running (for Stop/Break in gui)
+//  halting - channel to enable midstream halting of running (for Stop/Break in gui)
 //  finishing - channel to allow caller to know when Run() is finished
 func (c *Computer) Run(halting, finishing chan bool) {
 	var h bool
@@ -137,6 +140,7 @@ func (c *Computer) Status() (status ComputerStatus) {
 	status.Flags[1], _ = c.registers.TestFlag(CPSR, Z) // Zero Flag
 	status.Flags[2], _ = c.registers.TestFlag(CPSR, C) // Carry Flag
 	status.Flags[3], _ = c.registers.TestFlag(CPSR, F) // Overflow Flag
+	status.Flags[4], _ = c.registers.TestFlag(CPSR, I) // Interrupt Flag
 	c.log.Println("Flags:", status.Flags)
 
 	for i := 0; i < 16; i++ {
@@ -185,6 +189,7 @@ func (c *Computer) Status() (status ComputerStatus) {
 func (c *Computer) Step() (status bool) {
 	// For trace
 	pc, _ := c.cpu.FetchRegister(PC)
+
 	instructionBits := c.cpu.Fetch()
 
 	// Don't continue if the instruction is useless
@@ -204,6 +209,38 @@ func (c *Computer) Step() (status bool) {
 	c.step_counter++
 	if !status {
 		return false
+	}
+
+	interrupts_disabled, _ := c.cpu.registers.TestFlag(CPSR, 7)
+	if !interrupts_disabled && len(c.cpu.irq) > 0 {
+		// Switch to IRQ mode and handle the interrupt
+
+		// remove bool
+		<-c.cpu.irq
+
+		cpsr, _ := c.cpu.FetchRegister(CPSR)
+
+		// Save return address
+		pc, _ := c.cpu.FetchRegister(PC)
+		c.cpu.WriteRegister(r14_irq, pc-4)
+
+		// Save CPSR
+		c.cpu.WriteRegister(SPSR_irq, cpsr)
+
+		// Set mode bits
+		cpsr &= 0xFFFFFFE0
+		cpsr |= IRQ
+
+		// Set CPSR
+		c.cpu.WriteRegister(CPSR, cpsr)
+
+		// Set I bit
+		c.cpu.registers.SetFlag(CPSR, I, true)
+
+		c.log.Printf("New CPSR: %032b", cpsr)
+
+		// Set PC
+		c.cpu.WriteRegister(PC, 0x18)
 	}
 
 	return true

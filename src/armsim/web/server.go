@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"io"
 	"log"
+	"fmt"
 	"net/http"
 )
 
@@ -25,11 +26,14 @@ type Server struct {
 	Halt     chan bool
 	Finished chan bool
 	Log      *log.Logger
+	Keyboard chan byte
+	Console chan byte
 }
 
 var globalServer Server
 
 func (s *Server) Serve(ws *websocket.Conn) {
+	go s.SendConsoleOutput(ws)
 	for {
 		var m Message
 
@@ -60,6 +64,8 @@ func (s *Server) Serve(ws *websocket.Conn) {
 			s.Stop(ws)
 		case "trace": // Enable/Disable tracing
 			s.Trace(m, ws)
+		case "input":
+			s.Input(m, ws)
 		case "quit": // Quit connection
 			ws.Close()
 			break
@@ -88,7 +94,12 @@ func (s *Server) Load(m Message, ws *websocket.Conn) {
 	s.FilePath = path
 
 	s.Computer.Reset()
-	s.Computer.LoadELF(path)
+	err := s.Computer.LoadELF(path)
+	if err != nil {
+		m := Message{"error", fmt.Sprintf("Unable to load %s. Please check your path.", s.FilePath)}
+		m.Send(ws)
+	}
+
 	m = Message{"status", "loaded"}
 	m.Send(ws)
 	s.UpdateStatus(ws)
@@ -96,7 +107,13 @@ func (s *Server) Load(m Message, ws *websocket.Conn) {
 
 func (s *Server) Reset(ws *websocket.Conn) {
 	s.Computer.Reset()
-	s.Computer.LoadELF(s.FilePath)
+	err := s.Computer.LoadELF(s.FilePath)
+
+	if err != nil {
+		m := Message{"error", fmt.Sprintf("Unable to load %s. Please check your path.", s.FilePath)}
+		m.Send(ws)
+	}
+
 	s.UpdateStatus(ws)
 }
 
@@ -110,7 +127,6 @@ func (s *Server) Start(ws *websocket.Conn) {
 	s.UpdateStatus(ws)
 	m = Message{"status", "finished"}
 	m.Send(ws)
-
 }
 
 func (s *Server) Stop(ws *websocket.Conn) {
@@ -138,6 +154,22 @@ func (s *Server) UpdateStatus(ws *websocket.Conn) {
 	out, _ := json.Marshal(s.Computer.Status())
 	m := Message{"update", string(out)}
 	m.Send(ws)
+}
+
+func (s *Server) SendConsoleOutput(ws *websocket.Conn) {
+	var b byte
+	for {
+		b = <-s.Console
+		m := Message{"output", string(b)}
+		m.Send(ws)
+	}
+}
+
+func (s *Server) Input(m Message, ws *websocket.Conn) {
+	s.Keyboard <- m.Content[0]
+	if len(s.Computer.Irq) < 1 {
+		s.Computer.Irq <- true
+	}
 }
 
 func (s *Server) Launch(logOut io.Writer) {

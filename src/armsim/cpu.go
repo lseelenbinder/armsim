@@ -4,7 +4,6 @@
 package armsim
 
 import (
-	"fmt"
 	"io"
 	"log"
 	"os"
@@ -54,6 +53,7 @@ const (
 	C                    // Carry Flag
 	V                    // Overflow Flag
 	F = V                // Overflow Flag (alternative spelling)
+	I = 7 // Interrupt Bit
 )
 
 // Modes
@@ -73,11 +73,14 @@ type CPU struct {
 	// A reference to the assigned registers bank
 	registers *Memory
 
-	// A reference to the Keyboard (since we don't have a true bus)
+	// A channel for the Keyboard (since we don't have a true bus)
 	keyboard chan byte
 
-	// A reference to the Console (since we don't have a true bus)
+	// A channel for the Console (since we don't have a true bus)
 	console chan byte
+
+	// The IRQ pin
+	irq chan bool
 
 	// Logging class
 	log    *log.Logger
@@ -115,6 +118,9 @@ func NewCPU(ram *Memory, registers *Memory, keyboard chan byte,
 	// Assign Keyboard & Console
 	cpu.keyboard = keyboard
 	cpu.console = console
+
+	// Setup IRQ
+	cpu.irq = make(chan bool, 1)
 
 	return
 }
@@ -219,13 +225,11 @@ func (cpu *CPU) WriteRegisterFromInstruction(r, data uint32) (err error) {
 func (c *CPU) WriteOutByte(address uint32, data byte) (err error) {
 	if address == 0x100001 {
 		c.log.Printf("ERROR: Attempted to write to keyboard...")
-	} else if !(address == 0x100000) {
-		err = c.ram.WriteByte(address, data)
-	} else {
+	} else if address == 0x100000 {
 		// add byte to console buffer
 		c.console <- data
-		fmt.Printf("Output \"%c\" to console\n", data)
-		_ = <-c.console
+	} else {
+		err = c.ram.WriteByte(address, data)
 	}
 	return
 }
@@ -242,56 +246,15 @@ func (c *CPU) ReadInByte(address uint32) (data byte, err error) {
 	if address == 0x100000 {
 		c.log.Printf("ERROR: Attempted to read from console...")
 		return
-	} else if !(address == 0x100001) {
+	} else if address == 0x100001 {
+		// read char from keyboard
+		if len(c.keyboard) > 0 {
+			data = byte(<-c.keyboard)
+		} else {
+			data = 0
+		}
+	} else {
 		data, err = c.ram.ReadByte(address)
-	} else {
-		// read char from keyboard
-		data = byte(<-c.keyboard)
-		c.log.Printf("Read \"%s\" from keyboard", data)
-	}
-
-	return
-}
-
-// Wraps Memory.WriteWord to allow for memory-mapped IO
-//
-// Parameters:
-//  address - 32-bit address of write location in memory
-//  data - word of data to write
-//
-// Returns:
-//  err - any error that may have occurred
-func (c *CPU) WriteOutWord(address, data uint32) (err error) {
-	if address == 0x100001 {
-		c.log.Printf("ERROR: Attempted to write to keyboard...")
-	} else if !(address == 0x100000) {
-		err = c.ram.WriteWord(address, data)
-	} else {
-		// add byte to keyboard buffer
-		c.console <- byte(data)
-		fmt.Printf("Output \"%U\" to console", data)
-	}
-	return
-}
-
-// Wraps Memory.ReadWord to allow for memory-mapped IO
-//
-// Parameters:
-//  address - 32-bit address of read location in memory
-//
-// Returns:
-//  data - word of data at address
-//  err - any error that may have occurred
-func (c *CPU) ReadInWord(address uint32) (data uint32, err error) {
-	if address == 0x100000 {
-		c.log.Printf("ERROR: Attempted to read from console...")
-		return
-	} else if !(address == 0x100001) {
-		data, err = c.ram.ReadWord(address)
-	} else {
-		// read char from keyboard
-		data = uint32(<-c.keyboard)
-		c.log.Printf("Read \"%U\" from keyboard", data)
 	}
 
 	return

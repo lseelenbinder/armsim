@@ -82,7 +82,7 @@ func main() {
 		cmd := exec.Command("firefox", "http://localhost:4567/")
 		cmd.Start()
 
-		s := web.Server{c, options.fileName, halting, finishing, nil}
+		s := web.Server{c, options.fileName, halting, finishing, nil, c.Keyboard, c.Console}
 		// Launch the webserver
 		s.Launch(logFile)
 	} else if options.exec {
@@ -101,7 +101,7 @@ func processFlags() (options *Options, err error) {
 	flag.StringVar(&options.logFile, "log", "", "Log file")
 	flag.BoolVar(&options.tracing, "trace", true, "Output trace.log file (default=enabled)")
 	flag.BoolVar(&options.gui, "gui", true, "Use gui instead of command line")
-	flag.BoolVar(&options.exec, "exec", true, "Load file, execute and then close program")
+	flag.BoolVar(&options.exec, "exec", false, "Load file, execute and then close program (requires --load)")
 
 	// Parse Options
 	flag.Parse()

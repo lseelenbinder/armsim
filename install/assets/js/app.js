@@ -34,6 +34,12 @@ $(document).ready(function () {
     case "filename":
       $("#filename").text("File: " + received.Content);
       break;
+    case "output":
+      output(received);
+      break;
+    case "error":
+      error(received);
+      break;
     }
   };
 
@@ -53,7 +59,13 @@ $(document).ready(function () {
   // Setup Terminal
 	$("#terminal .term").terminal(function(command, term) {}, {
 		enabled: false,
-		greetings: "ARMSim by Luke Seelenbinder"
+		greetings: "ARMSim by Luke Seelenbinder",
+    prompt: "",
+    history: false,
+    tabCompletion: false,
+    keypress: function () { return false; },
+    keydown: keyboardInput,
+    onBlur: function (t) { t.disable(); }
 	});
 
   // Setup Shortcut Keys
@@ -284,6 +296,21 @@ function finished() {
     enableButton(button);
   });
   disableButton("stop");
+}
+
+function keyboardInput(e) {
+  var c = String.fromCharCode(e.keyCode);
+  ws.send("input", c);
+  console.log("Sent: " + e.keyCode);
+  return false;
+}
+
+function output(text) {
+  $("#terminal .term").terminal().insert(text.Content);
+}
+
+function error(error) {
+  alert("Error: " + error.Content);
 }
 
 function enableButton(button) {
