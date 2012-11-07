@@ -19,7 +19,7 @@ type Instruction interface {
 
 // Holds values typical to all ARM instructions.
 type baseInstruction struct {
-	Address uint32 // Address of instruction
+	Address         uint32 // Address of instruction
 	InstructionBits uint32 // The original bits of the instruction.
 	Type            uint32 // Type bits
 	CondCode        uint32 // Condition bits

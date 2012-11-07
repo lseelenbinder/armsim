@@ -54,7 +54,7 @@ const (
 	C                    // Carry Flag
 	V                    // Overflow Flag
 	F = V                // Overflow Flag (alternative spelling)
-	I = 7 // Interrupt Bit
+	I = 7                // Interrupt Bit
 )
 
 // Modes

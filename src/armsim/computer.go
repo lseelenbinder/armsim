@@ -55,7 +55,7 @@ type ComputerStatus struct {
 	Memory      []string   // A string representation of the RAM
 	Steps       uint64     // The number of steps executed so far (step_counter)
 	Checksum    int32      // Current RAM Checksum
-	Mode string // Current processor mode
+	Mode        string     // Current processor mode
 }
 
 // Initializes a Computer
