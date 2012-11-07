@@ -55,6 +55,7 @@ type ComputerStatus struct {
 	Memory      []string   // A string representation of the RAM
 	Steps       uint64     // The number of steps executed so far (step_counter)
 	Checksum    int32      // Current RAM Checksum
+	Mode string // Current processor mode
 }
 
 // Initializes a Computer
@@ -81,7 +82,7 @@ func NewComputer(memSize uint32, logOut io.Writer) (c *Computer) {
 
 	// Initialize a register bank to contain all 16 registers + CPSR + Banked
 	// registers
-	c.registers = NewMemory(SPSR_irq+4, logOut)
+	c.registers = NewMemory(100, logOut)
 
 	// Initialize buffers
 	c.Keyboard = make(chan byte, 100)
@@ -144,7 +145,7 @@ func (c *Computer) Status() (status ComputerStatus) {
 	c.log.Println("Flags:", status.Flags)
 
 	for i := 0; i < 16; i++ {
-		status.Registers[i], _ = c.registers.ReadWord(uint32(i << 2))
+		status.Registers[i], _ = c.registers.ReadWord(c.cpu.bankedRegister(uint32(i << 2)))
 	}
 
 	sp, _ := c.cpu.FetchRegister(SP)
@@ -179,6 +180,21 @@ func (c *Computer) Status() (status ComputerStatus) {
 
 	status.Steps = c.step_counter
 	status.Checksum = c.Checksum()
+
+	mode, _ := c.cpu.FetchRegister(CPSR)
+	mode = ExtractShiftBits(mode, 0, 5)
+	switch mode {
+	case Supervisor:
+		status.Mode = "Supervisor"
+	case IRQ:
+		status.Mode = "IRQ"
+	case System:
+		status.Mode = "System"
+	case User:
+		status.Mode = "User"
+	default:
+		status.Mode = "Unknown"
+	}
 
 	return
 }
@@ -218,14 +234,14 @@ func (c *Computer) Step() (status bool) {
 		// remove bool
 		<-c.cpu.irq
 
-		cpsr, _ := c.cpu.FetchRegister(CPSR)
-
 		// Save return address
 		pc, _ := c.cpu.FetchRegister(PC)
 		c.cpu.WriteRegister(r14_irq, pc-4)
 
 		// Save CPSR
+		cpsr, _ := c.cpu.FetchRegister(CPSR)
 		c.cpu.WriteRegister(SPSR_irq, cpsr)
+		c.log.Printf("Old CPSR: %032b", cpsr)
 
 		// Set mode bits
 		cpsr &= 0xFFFFFFE0
@@ -423,7 +439,7 @@ func (c *Computer) Reset() {
 	c.cpu.WriteRegister(SP_svc, 0x78F0)
 
 	// Set mode
-	c.cpu.WriteRegister(CPSR, 0x1F)
+	c.cpu.WriteRegister(CPSR, System)
 
 	c.step_counter = 1
 }

@@ -56,17 +56,7 @@ $(document).ready(function () {
     }
   }
 
-  // Setup Terminal
-	$("#terminal .term").terminal(function(command, term) {}, {
-		enabled: false,
-		greetings: "ARMSim by Luke Seelenbinder",
-    prompt: "",
-    history: false,
-    tabCompletion: false,
-    keypress: function () { return false; },
-    keydown: keyboardInput,
-    onBlur: function (t) { t.disable(); }
-	});
+  $("#terminal textarea").on("keydown", keyboardInput);
 
   // Setup Shortcut Keys
   $.Shortcuts.add({
@@ -164,10 +154,15 @@ function update(data) {
   updateStack(data.Stack, data.Registers[13]);
   updateMemory(data.Memory);
   updateChecksum(data.Checksum);
+  updateMode(data.Mode);
 }
 
 function updateChecksum(checksum) {
   $("#checksum").text("Checksum: " + checksum);
+}
+
+function updateMode(mode) {
+  $("#mode").text("Mode: " + mode);
 }
 
 function updateFlags(flags) {
@@ -306,7 +301,11 @@ function keyboardInput(e) {
 }
 
 function output(text) {
-  $("#terminal .term").terminal().insert(text.Content);
+  if (text.Content[0] == '\r') {
+    text.Content = "\n";
+  }
+  var old = $("#terminal textarea").val();
+  $("#terminal textarea").val(old + text.Content);
 }
 
 function error(error) {

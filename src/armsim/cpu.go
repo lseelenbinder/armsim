@@ -35,6 +35,7 @@ const (
 	r13_irq  // Banked r13 for IRQ
 	r14_irq  // Banked r14 for IRQ
 	SPSR_svc // SPSR for Supervisor
+	_
 	SPSR_irq // SPSR for IRQ
 
 	SP     = r13     // Stack Pointer
