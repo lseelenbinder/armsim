@@ -64,6 +64,8 @@ func (s *Server) Serve(ws *websocket.Conn) {
 			s.Stop(ws)
 		case "trace": // Enable/Disable tracing
 			s.Trace(m, ws)
+		case "system-trace": // Enable/Disable system tracing
+			s.SystemTrace(m, ws)
 		case "input":
 			s.Input(m, ws)
 		case "quit": // Quit connection
@@ -144,6 +146,17 @@ func (s *Server) Trace(m Message, ws *websocket.Conn) {
 		s.Computer.EnableTracing()
 	} else {
 		s.Computer.DisableTracing()
+	}
+}
+
+func (s *Server) SystemTrace(m Message, ws *websocket.Conn) {
+	// This has the potential to create a race condition. However, I don't think
+	// it would even matter (worst case is the last trace is cut off).
+
+	if m.Content == "on" {
+		s.Computer.EnableSystemTracing()
+	} else {
+		s.Computer.DisableSystemTracing()
 	}
 }
 

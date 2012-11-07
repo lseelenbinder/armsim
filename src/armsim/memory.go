@@ -149,7 +149,14 @@ func (m *Memory) ReadWord(address uint32) (data uint32, err error) {
 //  checksum - 32-bit integer
 func (m *Memory) Checksum() (checksum int32) {
 	for i := 0; i < len(m.memory); i++ {
-		checksum += int32(m.memory[i]) ^ int32(i)
+		var block byte
+		if 0x7ff0 >= i && i >= 0x7000 {
+			block = 0
+		} else {
+			block = m.memory[i]
+		}
+
+		checksum += int32(block) ^ int32(i)
 	}
 
 	return

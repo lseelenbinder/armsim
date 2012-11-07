@@ -36,6 +36,7 @@ type Computer struct {
 
 	// Trace Log File
 	traceFile *os.File
+	SystemTrace bool
 
 	// Keyboard buffer
 	Keyboard chan byte
@@ -208,22 +209,20 @@ func (c *Computer) Step() (status bool) {
 
 	instructionBits := c.cpu.Fetch()
 
-	// Don't continue if the instruction is useless
-	if instructionBits == 0x0 {
-		return false
-	}
-
 	instruction := c.cpu.Decode(instructionBits)
 	status = c.cpu.Execute(instruction)
 
 	// Write trace
-	if c.traceFile != nil {
+	cpsr, _ := c.cpu.FetchRegister(CPSR)
+	mode := ExtractBits(cpsr, 0, 5)
+	if c.traceFile != nil && (c.SystemTrace || mode == System) {
 		c.traceFile.WriteString(c.Trace(pc) + "\n")
 	}
 
 	// Increment step counter
 	c.step_counter++
-	if !status {
+
+	if !status || instructionBits == 0x0 {
 		return false
 	}
 
@@ -419,6 +418,25 @@ func (c *Computer) DisableTracing() (err error) {
 	return
 }
 
+// Enables system tracing
+//
+// Parameters: None
+//
+// Returns:
+//  err - any error that might have occured
+func (c *Computer) EnableSystemTracing() {
+	c.SystemTrace = true
+}
+
+// Disables tracing
+//
+// Parameters: None
+//
+// Returns:
+//  err - any error that might have occured
+func (c *Computer) DisableSystemTracing() {
+	c.SystemTrace = false
+}
 // Resets memory and registers to a clean state (all values zeroed out).
 func (c *Computer) Reset() {
 	for i := 0; uint32(i) < c.memSize; i += 4 {

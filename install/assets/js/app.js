@@ -126,6 +126,7 @@ $(document).ready(function () {
   });
 
   $("#trace-button").click(toggleTrace);
+  $("#system-trace-button").click(toggleSystemTrace);
 
   $("#memory-search").submit(function(e) {
     e.preventDefault();
@@ -253,6 +254,20 @@ function toggleTrace() {
     "'></i> Turn-" + (content == "on" ? "off" : "on") + " Tracing");
   $("#trace-button").toggleClass("btn-danger");
   $("#trace-button").toggleClass("btn-success");
+}
+
+function toggleSystemTrace() {
+  var content = "off";
+  if ($("#system-trace-button").hasClass("btn-success")) {
+    // Turn system tracing off
+    content = "on";
+  }
+
+  ws.send("system-trace", content);
+
+  $("#system-trace-button").html("Turn-" + (content == "on" ? "off" : "on") + " System Tracing");
+  $("#system-trace-button").toggleClass("btn-danger");
+  $("#system-trace-button").toggleClass("btn-success");
 }
 
 function loadFile() {
