@@ -11,7 +11,7 @@ func TestNewCPU(t *testing.T) {
 	registers := NewMemory(16*4, nil)
 
 	// initialize CPU
-	cpu = NewCPU(ram, registers, nil)
+	cpu = NewCPU(ram, registers, nil, nil, nil)
 
 	if cpu.ram != ram {
 		t.Fatal("RAM not referenced in CPU.")
@@ -25,7 +25,7 @@ func TestFetch(t *testing.T) {
 	// Setup
 	ram := NewMemory(32*1024, nil)
 	registers := NewMemory(16*4, nil)
-	cpu := NewCPU(ram, registers, nil)
+	cpu := NewCPU(ram, registers, nil, nil, nil)
 	var word uint32
 	var test uint32
 	var pc uint32
@@ -62,7 +62,7 @@ func TestDecode(t *testing.T) {
 	// Setup
 	ram := NewMemory(32*1024, nil)
 	registers := NewMemory(16*4, nil)
-	cpu := NewCPU(ram, registers, nil)
+	cpu := NewCPU(ram, registers, nil, nil, nil)
 
 	// I'm depending on my Instruction unit tests
 	cpu.Decode(0x0)
@@ -72,8 +72,8 @@ func TestExecute(t *testing.T) {
 	// Setup
 	ram := NewMemory(32*1024, nil)
 	registers := NewMemory(16*4, nil)
-	cpu := NewCPU(ram, registers, nil)
-	instruction := Decode(cpu, 0x0)
+	cpu := NewCPU(ram, registers, nil, nil, nil)
+	instruction := Decode(cpu, 0x0, 0x0)
 
 	cpu.Execute(instruction)
 }

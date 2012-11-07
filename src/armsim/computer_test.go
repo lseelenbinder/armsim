@@ -36,11 +36,11 @@ func TestNewComputer(t *testing.T) {
 	if computer.registers == nil {
 		t.Fatal("Did not initialize Registers.")
 	}
-	_, err = computer.registers.ReadByte(67)
+	_, err = computer.registers.ReadByte(99)
 	if err != nil {
 		t.Fatal("Did not initialize registers to correct size (too small).")
 	}
-	_, err = computer.registers.ReadByte(68)
+	_, err = computer.registers.ReadByte(100)
 	if err == nil {
 		t.Fatal("Did not initialize registers to correct size (too big).")
 	}
@@ -326,7 +326,7 @@ func TestReset(t *testing.T) {
 			t.Fatal("Reset did not clear all the bits in RAM.")
 		}
 	}
-	for i := 0; i < 68; i++ {
+	for i := 0; i < 12 << 2; i++ {
 		b, _ := c.registers.ReadByte(uint32(i))
 		if b != 0 {
 			t.Fatal("Reset did not clear all the bits in the registers.")

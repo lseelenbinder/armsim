@@ -443,7 +443,7 @@ func (c *Computer) Reset() {
 		c.ram.WriteWord(uint32(i), 0x0)
 	}
 
-	for i := 0; uint32(i) < (SPSR_irq + 4); i += 4 {
+	for i := 0; uint32(i) < 100; i += 4 {
 		c.registers.WriteWord(uint32(i), 0x0)
 	}
 
