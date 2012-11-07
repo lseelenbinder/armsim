@@ -48,6 +48,7 @@ Command line options:
 - --gui: (boolean) whether to launch the GUI or not (default: true)
 - --mem: (integer) size of the memory for the simulator in bytes
 - --trace: (boolean) whether or not to output a trace file (always trace.log)
+- --exec: (boolean) with --load will execute the file automatically
 
 You can also use `2>` to redirect most of the log output, as well.
 
@@ -105,6 +106,8 @@ Data Processing:
 - EOR
 - ORR
 - BIC
+- CMP
+- MOVS for r15
 
 Operand2 Addressing Modes:
 - Immediate
@@ -118,6 +121,11 @@ Load / Store:
 - STRB
 - LDM
 - STM
+
+Branch:
+- B
+- BL
+- BX
 
 Addressing Modes:
 - Pre-index with and without writeback
@@ -137,8 +145,6 @@ Shifts:
 Bugs
 ----
 
-- Any errors encountered by the simulator on a load are not explicitly passed to the GUI;
-  this will be fixed in a future version.
 - The GUI state could become corrupt if the right set of circumstances occur.
 - Keyboard shortcuts enable certain commands to be run even when they should be
-  disabled. This will be fixed in a future version.
+  disabled.
