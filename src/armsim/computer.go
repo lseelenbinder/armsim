@@ -165,9 +165,9 @@ func (c *Computer) Status() (status ComputerStatus) {
 
 	status.Disassembly = make([]string, 8)
 	i = 0
-	for pc := status.Registers[15] - 8; pc < status.Registers[15]+4*6; pc += 4 {
-		iBits, _ := c.ram.ReadWord(pc)
-		instruction := Decode(c.cpu, iBits)
+	for address := status.Registers[15] - 8; address < status.Registers[15]+4*6; address += 4 {
+		iBits, _ := c.ram.ReadWord(address)
+		instruction := Decode(c.cpu, address, iBits)
 		status.Disassembly[i] = fmt.Sprintf("%x||%s", iBits, instruction.Disassemble())
 		i++
 	}

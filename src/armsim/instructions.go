@@ -19,6 +19,7 @@ type Instruction interface {
 
 // Holds values typical to all ARM instructions.
 type baseInstruction struct {
+	Address uint32 // Address of instruction
 	InstructionBits uint32 // The original bits of the instruction.
 	Type            uint32 // Type bits
 	CondCode        uint32 // Condition bits
@@ -37,13 +38,15 @@ type baseInstruction struct {
 //
 // Returns:
 //	instruction - a decoded instruction of type Instruction
-func Decode(cpu *CPU, instructionBits uint32) (instruction Instruction) {
+func Decode(cpu *CPU, address uint32, instructionBits uint32) (instruction Instruction) {
 	base := new(baseInstruction)
 	base.log = log.New(cpu.logOut, "Instruction Factory: ", 0)
 
 	base.log.Printf("Decoding instruction: 0x%08x", instructionBits)
 
 	base.cpu = cpu // Set instruction's CPU
+
+	base.Address = address
 
 	base.InstructionBits = instructionBits // Set instruction bits
 	base.shifter = new(BarrelShifter)
@@ -759,10 +762,8 @@ func (bi *branchInstruction) Disassemble() (assembly string) {
 	if bi.bx {
 		assembly += fmt.Sprintf(" r%d", bi.Rm)
 	} else {
-		// TODO: This will not be correct out-of-context
-		pc, _ := bi.cpu.FetchRegister(PC)
-		newPC := uint32(int32(pc) + bi.Offset)
-		assembly += fmt.Sprintf(" #%X", newPC)
+		newPC := uint32(int32(bi.Address) + bi.Offset + 8)
+		assembly += fmt.Sprintf(" #%#x", newPC)
 	}
 
 	return
