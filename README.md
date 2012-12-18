@@ -18,22 +18,17 @@ Build and Test
 
 Go can be complicated to build the first time. The general methodology is to
 obtain the version of Go recommended for your platform, for more details see:
-[http://golang.org/doc/install](http://golang.org/doc/install). Don't forget to
-set a proper `$GOPATH`.
+[http://golang.org/doc/install](http://golang.org/doc/install).
 
 After obtaining Go, build the project on Linux by:
 - `cd` to the armsim/ folder in the project.
-- `export GOPATH=$GOPATH:$(pwd)` to add the armsim/ folder to your GOPATH.
+- `go get` to pull dependencies.
 - `go build -o install/armsim src/armsim.go` to build the armsim executable.
 - `cd ./install/` and run `./armsim`
-
-Note: If building fails, you many need to install the websockets package with:
-`go get code.google.com/p/go.net/websocket`.
 
 To test: `go test armsim`
   - there will be no output unless the tests fail
   - be patient, it can take 10 or 20 seconds for the test suite to run
-  - (requires your GOPATH to be set)
 
 It is entirely possible to build on Windows or Mac OS X, but you're on your own
 for that.
