@@ -1,8 +1,7 @@
 package main
 
 import (
-	"github.com/lseelenbinder/armsim/src/armsim"
-	"github.com/lseelenbinder/armsim/src/armsim/web"
+	"github.com/lseelenbinder/armsim/web"
 	"errors"
 	"flag"
 	"fmt"
