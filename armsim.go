@@ -1,6 +1,7 @@
 package main
 
 import (
+	"github.com/lseelenbinder/armsim/armsim"
 	"github.com/lseelenbinder/armsim/web"
 	"errors"
 	"flag"
