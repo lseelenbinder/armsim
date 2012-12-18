@@ -21,4 +21,5 @@ _testmain.go
 
 *.exe
 
+.DS_Store
 trace.log
