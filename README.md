@@ -13,6 +13,16 @@ Requirements
 - A Web browser that supports WebSockets Note: Firefox is the browser
   automatically launched by the simulator.
 
+Run
+---
+
+If you just want to run the simulator,
+
+- Download Go
+- `go get github.com/lseelenbinder/armsim`
+- `armsim`
+- Open http://localhost:4567/ in Firefox or Chrome.
+
 Build and Test
 -------------
 
@@ -20,18 +30,14 @@ Go can be complicated to build the first time. The general methodology is to
 obtain the version of Go recommended for your platform, for more details see:
 [http://golang.org/doc/install](http://golang.org/doc/install).
 
-After obtaining Go, build the project on Linux by:
-- `cd` to the armsim/ folder in the project.
-- `go get` to pull dependencies.
-- `go build -o install/armsim src/armsim.go` to build the armsim executable.
-- `cd ./install/` and run `./armsim`
+After using `go get` to fetch the project, it should already be built at
+$GOROOT/bin/armsim.
 
 To test: `go test armsim`
   - there will be no output unless the tests fail
   - be patient, it can take 10 or 20 seconds for the test suite to run
 
-It is entirely possible to build on Windows or Mac OS X, but you're on your own
-for that.
+Warning: the tests currently have an infinite loop bug. Run at your own risk.
 
 Configuration
 -------------
