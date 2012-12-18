@@ -1,7 +1,7 @@
 package web
 
 import (
-	"github.com/lseelenbinder/armsim/src/armsim"
+	"github.com/lseelenbinder/armsim/"
 	"code.google.com/p/go.net/websocket"
 	"encoding/json"
 	"io"
