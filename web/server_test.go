@@ -6,37 +6,45 @@ package web
 
 import (
 	"code.google.com/p/go.net/websocket"
+	"net/http"
 	"testing"
 	"time"
+	"os"
 )
 
 func TestServer(t *testing.T) {
+	var s Server
 	// Launch the server
-	go Launch()
+	go s.Launch(os.Stdout)
 
 	// Wait for server to come up (just in case)
-	time.Sleep(time.Duration(10) * time.Millisecond)
+	time.Sleep(time.Duration(100) * time.Millisecond)
 
-	origin := "http://localhost/"
-	url := "ws://localhost:12345/ws"
+	origin := "http://localhost:4567/"
+	url := "ws://localhost:4567/ws"
 	ws, err := websocket.Dial(url, "", origin)
 	if err != nil {
 		t.Fatal(err)
 	}
 
 	var m Message
-	var s Status
 
 	// Test Initial Ping
 	m = Message{"hello", ""}
 	m.Send(ws)
 	websocket.JSON.Receive(ws, &m)
-	if m.Cmd != "ello" {
+	if m.Type != "status" || m.Content != "ready" {
 		t.Fatal("Did not acknowledge ping.")
 	}
 
 	// Test Load
 	m = Message{"load", "../../test/test1.exe"}
 	m.Send(ws)
-	websocket.JSON.Receive(ws, &s)
+	websocket.JSON.Receive(ws, &m)
+
+	// Test index.html
+	resp, err := http.Get("http://localhost:4567/index.html")
+	if resp.Status != "200 OK" {
+		t.Fatal("Did not load index.html. " + resp.Status)
+	}
 }

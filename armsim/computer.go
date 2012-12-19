@@ -35,7 +35,7 @@ type Computer struct {
 	log *log.Logger
 
 	// Trace Log File
-	traceFile *os.File
+	traceFile   *os.File
 	SystemTrace bool
 
 	// Keyboard buffer
@@ -437,6 +437,7 @@ func (c *Computer) EnableSystemTracing() {
 func (c *Computer) DisableSystemTracing() {
 	c.SystemTrace = false
 }
+
 // Resets memory and registers to a clean state (all values zeroed out).
 func (c *Computer) Reset() {
 	for i := 0; uint32(i) < c.memSize; i += 4 {

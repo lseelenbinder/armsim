@@ -326,7 +326,7 @@ func TestReset(t *testing.T) {
 			t.Fatal("Reset did not clear all the bits in RAM.")
 		}
 	}
-	for i := 0; i < 12 << 2; i++ {
+	for i := 0; i < 12<<2; i++ {
 		b, _ := c.registers.ReadByte(uint32(i))
 		if b != 0 {
 			t.Fatal("Reset did not clear all the bits in the registers.")

@@ -4,9 +4,11 @@ import (
 	"github.com/lseelenbinder/armsim/armsim"
 	"code.google.com/p/go.net/websocket"
 	"encoding/json"
-	"io"
-	"log"
 	"fmt"
+	"io"
+	"os"
+	"path/filepath"
+	"log"
 	"net/http"
 )
 
@@ -27,7 +29,7 @@ type Server struct {
 	Finished chan bool
 	Log      *log.Logger
 	Keyboard chan byte
-	Console chan byte
+	Console  chan byte
 }
 
 var globalServer Server
@@ -188,10 +190,14 @@ func (s *Server) Input(m Message, ws *websocket.Conn) {
 func (s *Server) Launch(logOut io.Writer) {
 	globalServer = *s
 	globalServer.Log = log.New(logOut, "Web Server: ", 0)
-	http.Handle("/", http.FileServer(http.Dir("assets/")))
+
+	asset_path := filepath.Join(os.Getenv("GOPATH"), "src/github.com/lseelenbinder/armsim/web/assets/")
+	globalServer.Log.Println(asset_path)
+
+	http.Handle("/", http.FileServer(http.Dir(asset_path)))
 	http.Handle("/ws", websocket.Handler(wsHandler))
 
-	if err := http.ListenAndServe(":4567", nil); err != nil {
+	if err := http.ListenAndServe("localhost:4567", nil); err != nil {
 		panic("ListenAndServe: " + err.Error())
 	}
 }
