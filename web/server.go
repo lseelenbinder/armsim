@@ -3,7 +3,7 @@ package web
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/anaskhan96/armsim/armsim"
+	"github.com/lseelenbinder/armsim/armsim"
 	"golang.org/x/net/websocket"
 	"io"
 	"log"
@@ -191,7 +191,7 @@ func (s *Server) Launch(logOut io.Writer) {
 	globalServer = *s
 	globalServer.Log = log.New(logOut, "Web Server: ", 0)
 
-	asset_path := filepath.Join(os.Getenv("GOPATH"), "src/github.com/anaskhan96/armsim/web/assets/")
+	asset_path := filepath.Join(os.Getenv("GOPATH"), "src/github.com/lseelenbinder/armsim/web/assets/")
 	globalServer.Log.Println(asset_path)
 
 	http.Handle("/", http.FileServer(http.Dir(asset_path)))

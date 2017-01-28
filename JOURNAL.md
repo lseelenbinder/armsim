@@ -119,7 +119,7 @@
     1) I was running out of time and 2) they are very self-evident in purpose.
   - References:
     - [WebSocket Example](http://gary.beagledreams.com/page/go-websocket-chat.html)
-    - [Go WebSocket Implementation](https://code.google.com/p/go/source/browse/?repo=net#hg%2Fwebsocket)
+    - [Go WebSocket Implementation](https://godoc.org/golang.org/x/net/websocket)
     - [ChessBuddy](https://github.com/tux21b/ChessBuddy) (for reference and ideas)
 5. Connect Design and Prototype (7 hours)
   - I spent a very long time working on this portion of the development. I used
