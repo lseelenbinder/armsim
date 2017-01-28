@@ -5,11 +5,11 @@
 package web
 
 import (
-	"code.google.com/p/go.net/websocket"
+	"golang.org/x/net/websocket"
 	"net/http"
+	"os"
 	"testing"
 	"time"
-	"os"
 )
 
 func TestServer(t *testing.T) {
