@@ -1,15 +1,15 @@
 package web
 
 import (
-	"github.com/lseelenbinder/armsim/armsim"
-	"code.google.com/p/go.net/websocket"
 	"encoding/json"
 	"fmt"
+	"github.com/lseelenbinder/armsim/armsim"
+	"golang.org/x/net/websocket"
 	"io"
-	"os"
-	"path/filepath"
 	"log"
 	"net/http"
+	"os"
+	"path/filepath"
 )
 
 // Generic Message

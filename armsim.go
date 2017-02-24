@@ -1,11 +1,11 @@
 package main
 
 import (
-	"github.com/lseelenbinder/armsim/armsim"
-	"github.com/lseelenbinder/armsim/web"
 	"errors"
 	"flag"
 	"fmt"
+	"github.com/lseelenbinder/armsim/armsim"
+	"github.com/lseelenbinder/armsim/web"
 	"log"
 	"os"
 	"os/exec"
